@@ -42,5 +42,5 @@ writeFileSync(
   join(FUNC, ".vc-config.json"),
   JSON.stringify({ runtime: "nodejs22.x", handler: "index.mjs", launcherType: "Nodejs", maxDuration: 300, memory: 2048, shouldAddHelpers: false, supportsResponseStreaming: true }, null, 2),
 );
-writeFileSync(join(OUT, "config.json"), JSON.stringify({ version: 3, routes: [{ src: "/(.*)", dest: "/index" }] }, null, 2));
+writeFileSync(join(OUT, "config.json"), JSON.stringify({ version: 3, routes: [{ src: "/", dest: "/index" }, { src: "/(.*)", dest: "/index" }] }, null, 2));
 console.log("built .vercel/output");

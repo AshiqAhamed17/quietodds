@@ -57,6 +57,14 @@ export function createApp(relayer: Relayer, opts: { corsOrigin?: string; submitL
 
   const submitLimit = rateLimit(opts.submitLimitPerMinute ?? 20, 60_000);
 
+  app.get("/", (c) =>
+    c.json({
+      service: "QuietOdds relayer",
+      relayer: relayer.address,
+      routes: ["GET /health", "GET /fee-quote", "POST /spend", "POST /redeem"],
+      source: "https://github.com/AshiqAhamed17/quietodds/tree/main/relayer",
+    }),
+  );
   app.get("/health", async (c) => c.json(await relayer.health()));
   app.get("/fee-quote", async (c) => c.json(await relayer.quote()));
 

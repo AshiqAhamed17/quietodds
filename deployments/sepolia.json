@@ -1,0 +1,37 @@
+{
+  "chainId": 11155111,
+  "_verified": "2026-11-06: every address below has code on Sepolia; tokens/feeds checked via symbol()/description(); PositionManager and StateView point at this PoolManager.",
+  "_sources": {
+    "uniswap": "https://developers.uniswap.org/llms.mdx/docs/protocols/v4/deployments",
+    "creForwarders": "https://docs.chain.link/cre/guides/workflow/using-evm-client/forwarder-directory-ts.md",
+    "anonRpc": "https://ethereum.github.io/anon-rpc/wallets/"
+  },
+  "tokens": {
+    "USDC": { "address": "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238", "decimals": 6 },
+    "WETH": { "address": "0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14", "decimals": 18 }
+  },
+  "uniswapV4": {
+    "PoolManager": "0xE03A1074c86CFeDd5C142C4F04F1a1536e203543",
+    "UniversalRouter": "0x3A9D48AB9751398BbFa63ad67599Bb04e4BdF98b",
+    "PositionManager": "0x429ba70129df741B2Ca2a85BC3A2a3328e5c09b4",
+    "StateView": "0xe1dd9c3fa50edb962e442f60dfbc432e24537e4c",
+    "Quoter": "0x68aFa8b853cAa7a2D40B0F6AEE5C4DbC147C8244",
+    "PoolSwapTest": "0x9b6b46e2c869aa39918db7f52f5557fe577b6eee",
+    "PoolModifyLiquidityTest": "0x0c478023803a644c94c4ce1c1e7b9a087e411b0a",
+    "Permit2": "0x000000000022D473030F116dDEE9F6B43aC78BA3"
+  },
+  "chainlinkFeeds": {
+    "ETH_USD": "0x694AA1769357215DE4FAC081bf1f309aDC325306",
+    "BTC_USD": "0x1b44F3514812d835EB1BDB0acB33d3fA3351Ee43",
+    "LINK_USD": "0xc59E3633BAAC79493d908e63626716e204A45EdF"
+  },
+  "cre": {
+    "chainSelectorName": "ethereum-testnet-sepolia",
+    "simulationForwarder": "0x15fC6ae953E024d975e77382eEeC56A9101f9F88",
+    "productionForwarder": "0xF8344CFd5c43616a4366C34E3EEE75af79a74482"
+  },
+  "anonRpc": {
+    "noxSpecifier": "0x35133267A8F7EC35046a83DCA0f4Ca8A6e1b7A9A"
+  },
+  "quietodds": {}
+}

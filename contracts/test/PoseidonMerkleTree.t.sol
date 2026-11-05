@@ -42,8 +42,9 @@ contract PoseidonMerkleTreeTest is Test {
 
     function test_rootMatchesProofFixture() public {
         // Inserting the fixture's deposit leaf reproduces the root the spend proof was built on.
-        string memory json = vm.readFile("test/fixtures/spend_bet.json");
-        tree.insert(vm.parseJsonUint(json, ".ctx.depositLeaf"));
+        string memory story = vm.readFile("test/fixtures/story.json");
+        tree.insert(vm.parseJsonUint(story, ".leaves[0]"));
+        string memory json = vm.readFile("test/fixtures/bet_priya.json");
         assertEq(bytes32(tree.getLastRoot()), vm.parseJsonBytes32Array(json, ".publicInputs")[0]);
     }
 

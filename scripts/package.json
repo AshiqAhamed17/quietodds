@@ -1,0 +1,11 @@
+{
+  "name": "quietodds-scripts",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "poseidon-parity": "node poseidon-parity.mjs"
+  },
+  "dependencies": {
+    "poseidon-lite": "^0.3.0"
+  }
+}

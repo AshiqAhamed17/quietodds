@@ -2,7 +2,6 @@
 src = "src"
 out = "out"
 libs = ["lib"]
-solc = "0.8.26"
 evm_version = "cancun"
 via_ir = false
 # The generated UltraHonk verifiers are large; optimize so they fit the

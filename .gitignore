@@ -1,0 +1,20 @@
+node_modules/
+.next/
+.env
+.env.local
+*.log
+.DS_Store
+
+# Foundry
+contracts/cache/
+contracts/out/
+contracts/broadcast/
+
+# Noir / nargo build artifacts
+circuits/**/target/
+circuits/**/export/
+
+# Local planning docs and Claude context (not for the public repo)
+plan.md
+CLAUDE.md
+.claude/

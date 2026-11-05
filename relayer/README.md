@@ -44,5 +44,8 @@ vercel env add SEPOLIA_RPC_URL production                   # once
 npm run deploy -w relayer
 ```
 
+The project is not connected to GitHub: a Git-triggered build would replace
+this prebuilt function with an empty site. Deploy only with `npm run deploy`.
+
 A warm instance serves requests in order, so nonces don't collide; the
 function may run up to 300s while it waits for a receipt.

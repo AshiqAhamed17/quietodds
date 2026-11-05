@@ -55,6 +55,12 @@ pub fn assert_u128(x: Field) {
     x.assert_max_bit_size::<128>();
 }
 
+/// Amounts and ratio terms in `redeem` are capped at 96 bits, so products
+/// like `stake * num` stay far below the field modulus (< 2^192).
+pub fn assert_u96(x: Field) {
+    x.assert_max_bit_size::<96>();
+}
+
 // --- tests -----------------------------------------------------------------
 
 #[test]

@@ -1,0 +1,7 @@
+[package]
+name = "redeem"
+type = "bin"
+authors = ["Ashiq Ahamed"]
+
+[dependencies]
+quietodds = { path = "../lib" }

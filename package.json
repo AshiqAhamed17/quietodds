@@ -1,0 +1,8 @@
+{
+  "name": "quietodds",
+  "private": true,
+  "workspaces": ["lib", "relayer", "scripts"],
+  "scripts": {
+    "test": "npm test --workspaces --if-present"
+  }
+}

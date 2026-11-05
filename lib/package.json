@@ -1,0 +1,28 @@
+{
+  "name": "@quietodds/lib",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Notes, keys, Merkle paths, witnesses and proofs shared by the QuietOdds app, relayer and scripts.",
+  "exports": {
+    ".": "./src/index.ts",
+    "./prover": "./src/prover.ts",
+    "./circuits/*": "./circuits/*"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "sync": "node scripts/sync-artifacts.mjs"
+  },
+  "dependencies": {
+    "@aztec/bb.js": "5.1.0",
+    "@noir-lang/noir_js": "1.0.0-beta.25",
+    "poseidon-lite": "^0.3.0",
+    "viem": "^2.40.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.0",
+    "typescript": "^5.9.0",
+    "vitest": "^3.2.0"
+  }
+}

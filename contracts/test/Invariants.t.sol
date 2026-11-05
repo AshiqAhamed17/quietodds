@@ -35,7 +35,7 @@ abstract contract PoolFixture is Test {
         markets.setPool(address(pool));
         markets.setResolver(resolver);
         closeTime = uint64(block.timestamp + 1 hours);
-        markets.createMarket("m", 2, closeTime, Markets.Source.Sports, "", address(0), 0);
+        markets.createMarket("m", "Yes|No", 2, closeTime, Markets.Source.Sports, "", address(0), 0);
     }
 
     function _fixture(string memory name) internal view returns (bytes memory proof, bytes32[] memory pi) {

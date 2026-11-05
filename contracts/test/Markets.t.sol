@@ -23,11 +23,16 @@ contract MarketsTest is Test {
     }
 
     function _sports() internal returns (uint256) {
-        return markets.createMarket("India vs Australia", 2, closeTime, Markets.Source.Sports, "espn:1", address(0), 0);
+        return markets.createMarket(
+            "India vs Australia", "India|Australia", 2, closeTime, Markets.Source.Sports, "espn:1", address(0), 0
+        );
     }
 
     function _price() internal returns (uint256) {
-        return markets.createMarket("ETH > $2500?", 2, closeTime, Markets.Source.Price, "", address(feed), 2500e8);
+        return
+            markets.createMarket(
+                "ETH > $2500?", "No|Yes", 2, closeTime, Markets.Source.Price, "", address(feed), 2500e8
+            );
     }
 
     function test_createAndBet() public {
@@ -47,7 +52,7 @@ contract MarketsTest is Test {
     function test_onlyOwnerCreates() public {
         vm.prank(makeAddr("rando"));
         vm.expectRevert();
-        markets.createMarket("x", 2, closeTime, Markets.Source.Sports, "", address(0), 0);
+        markets.createMarket("x", "Yes|No", 2, closeTime, Markets.Source.Sports, "", address(0), 0);
     }
 
     function test_onlyPoolBets() public {

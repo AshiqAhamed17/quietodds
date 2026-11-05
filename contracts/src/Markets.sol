@@ -26,10 +26,11 @@ contract Markets is Ownable {
 
     struct Market {
         string question;
+        string outcomes; // side labels, "|"-separated, e.g. "Forest|Draw|Man City"
         uint8 numSides;
         uint64 closeTime;
         Source source;
-        string sourceRef; // e.g. "espn:soccer/eng.1:740912" for sports markets
+        string sourceRef; // e.g. "espn:soccer/eng.1:401878757"; side order: home, draw, away
         address priceFeed; // Price markets only
         int256 threshold; // Price markets only, in feed decimals
         Status status;
@@ -103,6 +104,7 @@ contract Markets is Ownable {
 
     function createMarket(
         string calldata question,
+        string calldata outcomes,
         uint8 numSides,
         uint64 closeTime,
         Source source,
@@ -117,6 +119,7 @@ contract Markets is Ownable {
         marketId = ++marketCount; // ids start at 1
         Market storage m = _markets[marketId];
         m.question = question;
+        m.outcomes = outcomes;
         m.numSides = numSides;
         m.closeTime = closeTime;
         m.source = source;

@@ -10,16 +10,12 @@ import {PoseidonT6} from "poseidon-solidity/PoseidonT6.sol";
 /// scripts/poseidon-parity.mjs. On-chain leaves must hash exactly like the circuits.
 contract PoseidonParityTest is Test {
     function test_hash2() public pure {
-        assertEq(
-            PoseidonT3.hash([uint256(1), 2]),
-            0x115cc0f5e7d690413df64c6b9662e9cf2a3617f2743245519e19607a4417189a
-        );
+        assertEq(PoseidonT3.hash([uint256(1), 2]), 0x115cc0f5e7d690413df64c6b9662e9cf2a3617f2743245519e19607a4417189a);
     }
 
     function test_hash4() public pure {
         assertEq(
-            PoseidonT5.hash([uint256(1), 2, 3, 4]),
-            0x299c867db6c1fdd79dcefa40e4510b9837e60ebb1ce0663dbaa525df65250465
+            PoseidonT5.hash([uint256(1), 2, 3, 4]), 0x299c867db6c1fdd79dcefa40e4510b9837e60ebb1ce0663dbaa525df65250465
         );
     }
 

@@ -6,123 +6,124 @@ uint256 constant N = 32768;
 uint256 constant LOG_N = 15;
 uint256 constant NUMBER_OF_PUBLIC_INPUTS = 20;
 uint256 constant VK_HASH = 0x1b37fafc46b91384fa778492bad1ded12cb7d7e4bd119550ebbcb4e037a3e412;
+
 library RedeemVerifier_HonkVerificationKey {
     function loadVerificationKey() internal pure returns (RedeemVerifier_Honk.VerificationKey memory) {
         RedeemVerifier_Honk.VerificationKey memory vk = RedeemVerifier_Honk.VerificationKey({
             circuitSize: uint256(32768),
             logCircuitSize: uint256(15),
             publicInputsSize: uint256(20),
-            ql: RedeemVerifier_Honk.G1Point({ 
-               x: uint256(0x113a296ebc15e3f33fd8a957e9d743ed6aaf5520644657c9a6b2e2e4d0859c29),
-               y: uint256(0x2775255014042fc3a9b9e3f41f8e3dcf3639bfd6fce9782d2eac525f9420c265)
+            ql: RedeemVerifier_Honk.G1Point({
+                x: uint256(0x113a296ebc15e3f33fd8a957e9d743ed6aaf5520644657c9a6b2e2e4d0859c29),
+                y: uint256(0x2775255014042fc3a9b9e3f41f8e3dcf3639bfd6fce9782d2eac525f9420c265)
             }),
-            qr: RedeemVerifier_Honk.G1Point({ 
-               x: uint256(0x1d1a481824e7dd8a227ea4e8cf516ed4bacea647408c407061405a0ea93ead39),
-               y: uint256(0x2ee4fa0aaa2bd0f43c90b543dea0f3b1b1c7007bcd0294915923b7b3f4ec9f3f)
+            qr: RedeemVerifier_Honk.G1Point({
+                x: uint256(0x1d1a481824e7dd8a227ea4e8cf516ed4bacea647408c407061405a0ea93ead39),
+                y: uint256(0x2ee4fa0aaa2bd0f43c90b543dea0f3b1b1c7007bcd0294915923b7b3f4ec9f3f)
             }),
-            qo: RedeemVerifier_Honk.G1Point({ 
-               x: uint256(0x2767c517cb595e8f9e08de8e9c4da7c4f3b32aa2552c6825d5e053aa4e038a28),
-               y: uint256(0x0a49d73fad8a644091cf4bb984352424b2e0f8d49ab73b06ac0252c0fa7c510c)
+            qo: RedeemVerifier_Honk.G1Point({
+                x: uint256(0x2767c517cb595e8f9e08de8e9c4da7c4f3b32aa2552c6825d5e053aa4e038a28),
+                y: uint256(0x0a49d73fad8a644091cf4bb984352424b2e0f8d49ab73b06ac0252c0fa7c510c)
             }),
-            q4: RedeemVerifier_Honk.G1Point({ 
-               x: uint256(0x2b1875cbf8dbdb50c41c49c6c6aad5a81eaf817287cd695b06f2e400f0cadc12),
-               y: uint256(0x0563bd19aba7713db7a138771ac55c47f927aec0e59719a8aca0fc16762e3027)
+            q4: RedeemVerifier_Honk.G1Point({
+                x: uint256(0x2b1875cbf8dbdb50c41c49c6c6aad5a81eaf817287cd695b06f2e400f0cadc12),
+                y: uint256(0x0563bd19aba7713db7a138771ac55c47f927aec0e59719a8aca0fc16762e3027)
             }),
-            qm: RedeemVerifier_Honk.G1Point({ 
-               x: uint256(0x0573f523870bc706d8a2ec9af9687cd030e4aaddf950896c8135d9aea8d23756),
-               y: uint256(0x15d93ec1bec6d1c0ca3466cafdf62bb2af27218b2d92965953d4e63e036da500)
+            qm: RedeemVerifier_Honk.G1Point({
+                x: uint256(0x0573f523870bc706d8a2ec9af9687cd030e4aaddf950896c8135d9aea8d23756),
+                y: uint256(0x15d93ec1bec6d1c0ca3466cafdf62bb2af27218b2d92965953d4e63e036da500)
             }),
-            qc: RedeemVerifier_Honk.G1Point({ 
-               x: uint256(0x23fd8923646300f8b104bbf7c7cb58d230315b42e5cb0e954cd55c459d9ac228),
-               y: uint256(0x25a69c3b517dcc99d97e6f6cfb5bba4e6345bf6cb2d767f714ebeb5b42070987)
+            qc: RedeemVerifier_Honk.G1Point({
+                x: uint256(0x23fd8923646300f8b104bbf7c7cb58d230315b42e5cb0e954cd55c459d9ac228),
+                y: uint256(0x25a69c3b517dcc99d97e6f6cfb5bba4e6345bf6cb2d767f714ebeb5b42070987)
             }),
-            qLookup: RedeemVerifier_Honk.G1Point({ 
-               x: uint256(0x0000000000000000000000000000000000000000000000000000000000000000),
-               y: uint256(0x0000000000000000000000000000000000000000000000000000000000000000)
+            qLookup: RedeemVerifier_Honk.G1Point({
+                x: uint256(0x0000000000000000000000000000000000000000000000000000000000000000),
+                y: uint256(0x0000000000000000000000000000000000000000000000000000000000000000)
             }),
-            qArith: RedeemVerifier_Honk.G1Point({ 
-               x: uint256(0x03ead0e0bd0bd675af7dda95f3eb5299ad579ce1b93aa7fa9d487bc902621215),
-               y: uint256(0x2f3e0192a4cc7ae5bed4160d03bba56e700acfd67ab6f4afe77683b1b0bf1535)
+            qArith: RedeemVerifier_Honk.G1Point({
+                x: uint256(0x03ead0e0bd0bd675af7dda95f3eb5299ad579ce1b93aa7fa9d487bc902621215),
+                y: uint256(0x2f3e0192a4cc7ae5bed4160d03bba56e700acfd67ab6f4afe77683b1b0bf1535)
             }),
-            qDeltaRange: RedeemVerifier_Honk.G1Point({ 
-               x: uint256(0x0fd8f1a128f0c32da84ff245f3f3bbd63356a7e075d3a9673e040ae28a3a53d8),
-               y: uint256(0x0fd88a7d740a6e75375aa01d4659141a30de639e022a43e3e8f7a955bd1b08f2)
+            qDeltaRange: RedeemVerifier_Honk.G1Point({
+                x: uint256(0x0fd8f1a128f0c32da84ff245f3f3bbd63356a7e075d3a9673e040ae28a3a53d8),
+                y: uint256(0x0fd88a7d740a6e75375aa01d4659141a30de639e022a43e3e8f7a955bd1b08f2)
             }),
-            qElliptic: RedeemVerifier_Honk.G1Point({ 
-               x: uint256(0x0000000000000000000000000000000000000000000000000000000000000000),
-               y: uint256(0x0000000000000000000000000000000000000000000000000000000000000000)
+            qElliptic: RedeemVerifier_Honk.G1Point({
+                x: uint256(0x0000000000000000000000000000000000000000000000000000000000000000),
+                y: uint256(0x0000000000000000000000000000000000000000000000000000000000000000)
             }),
-            qMemory: RedeemVerifier_Honk.G1Point({ 
-               x: uint256(0x0000000000000000000000000000000000000000000000000000000000000000),
-               y: uint256(0x0000000000000000000000000000000000000000000000000000000000000000)
+            qMemory: RedeemVerifier_Honk.G1Point({
+                x: uint256(0x0000000000000000000000000000000000000000000000000000000000000000),
+                y: uint256(0x0000000000000000000000000000000000000000000000000000000000000000)
             }),
-            qNnf: RedeemVerifier_Honk.G1Point({ 
-               x: uint256(0x0000000000000000000000000000000000000000000000000000000000000000),
-               y: uint256(0x0000000000000000000000000000000000000000000000000000000000000000)
+            qNnf: RedeemVerifier_Honk.G1Point({
+                x: uint256(0x0000000000000000000000000000000000000000000000000000000000000000),
+                y: uint256(0x0000000000000000000000000000000000000000000000000000000000000000)
             }),
-            qPoseidon2External: RedeemVerifier_Honk.G1Point({ 
-               x: uint256(0x0000000000000000000000000000000000000000000000000000000000000000),
-               y: uint256(0x0000000000000000000000000000000000000000000000000000000000000000)
+            qPoseidon2External: RedeemVerifier_Honk.G1Point({
+                x: uint256(0x0000000000000000000000000000000000000000000000000000000000000000),
+                y: uint256(0x0000000000000000000000000000000000000000000000000000000000000000)
             }),
-            qPoseidon2Internal: RedeemVerifier_Honk.G1Point({ 
-               x: uint256(0x0000000000000000000000000000000000000000000000000000000000000000),
-               y: uint256(0x0000000000000000000000000000000000000000000000000000000000000000)
+            qPoseidon2Internal: RedeemVerifier_Honk.G1Point({
+                x: uint256(0x0000000000000000000000000000000000000000000000000000000000000000),
+                y: uint256(0x0000000000000000000000000000000000000000000000000000000000000000)
             }),
-            s1: RedeemVerifier_Honk.G1Point({ 
-               x: uint256(0x044137123e4935fe17fdabfb4994374fe36d8343fc06dc253597b3df3d80ee2e),
-               y: uint256(0x2c47f1784bca57656fd9171ec037a7657dd378dc2bf4a12e043d15044212981d)
+            s1: RedeemVerifier_Honk.G1Point({
+                x: uint256(0x044137123e4935fe17fdabfb4994374fe36d8343fc06dc253597b3df3d80ee2e),
+                y: uint256(0x2c47f1784bca57656fd9171ec037a7657dd378dc2bf4a12e043d15044212981d)
             }),
-            s2: RedeemVerifier_Honk.G1Point({ 
-               x: uint256(0x1ec9b27736ae891f05ac9a897ac047286365d2ddc3efc1dc3b3bd2e988b4b191),
-               y: uint256(0x0845558958e6632e5ebd75bc6f3883d43847c6635cc5c987650ee9a9db7d7a43)
+            s2: RedeemVerifier_Honk.G1Point({
+                x: uint256(0x1ec9b27736ae891f05ac9a897ac047286365d2ddc3efc1dc3b3bd2e988b4b191),
+                y: uint256(0x0845558958e6632e5ebd75bc6f3883d43847c6635cc5c987650ee9a9db7d7a43)
             }),
-            s3: RedeemVerifier_Honk.G1Point({ 
-               x: uint256(0x151d4eeaec66202b1dfd57142ef140a6c8c3eb51ccd2a88efcecf44950894fa5),
-               y: uint256(0x0ed022b5c9c57f33fd3a49358aec3158351dc2c6cfc281631281dcbcc1ee6325)
+            s3: RedeemVerifier_Honk.G1Point({
+                x: uint256(0x151d4eeaec66202b1dfd57142ef140a6c8c3eb51ccd2a88efcecf44950894fa5),
+                y: uint256(0x0ed022b5c9c57f33fd3a49358aec3158351dc2c6cfc281631281dcbcc1ee6325)
             }),
-            s4: RedeemVerifier_Honk.G1Point({ 
-               x: uint256(0x300d8594c220141904751ca2e6f581b12c70104aa8c11eae54d7a59c56aba8ad),
-               y: uint256(0x0a1a58568d37982f1cd68728c5791d0abcf3d7014c80a562084108992fb73d69)
+            s4: RedeemVerifier_Honk.G1Point({
+                x: uint256(0x300d8594c220141904751ca2e6f581b12c70104aa8c11eae54d7a59c56aba8ad),
+                y: uint256(0x0a1a58568d37982f1cd68728c5791d0abcf3d7014c80a562084108992fb73d69)
             }),
-            t1: RedeemVerifier_Honk.G1Point({ 
-               x: uint256(0x0000000000000000000000000000000000000000000000000000000000000000),
-               y: uint256(0x0000000000000000000000000000000000000000000000000000000000000000)
+            t1: RedeemVerifier_Honk.G1Point({
+                x: uint256(0x0000000000000000000000000000000000000000000000000000000000000000),
+                y: uint256(0x0000000000000000000000000000000000000000000000000000000000000000)
             }),
-            t2: RedeemVerifier_Honk.G1Point({ 
-               x: uint256(0x0000000000000000000000000000000000000000000000000000000000000000),
-               y: uint256(0x0000000000000000000000000000000000000000000000000000000000000000)
+            t2: RedeemVerifier_Honk.G1Point({
+                x: uint256(0x0000000000000000000000000000000000000000000000000000000000000000),
+                y: uint256(0x0000000000000000000000000000000000000000000000000000000000000000)
             }),
-            t3: RedeemVerifier_Honk.G1Point({ 
-               x: uint256(0x0000000000000000000000000000000000000000000000000000000000000000),
-               y: uint256(0x0000000000000000000000000000000000000000000000000000000000000000)
+            t3: RedeemVerifier_Honk.G1Point({
+                x: uint256(0x0000000000000000000000000000000000000000000000000000000000000000),
+                y: uint256(0x0000000000000000000000000000000000000000000000000000000000000000)
             }),
-            t4: RedeemVerifier_Honk.G1Point({ 
-               x: uint256(0x0000000000000000000000000000000000000000000000000000000000000000),
-               y: uint256(0x0000000000000000000000000000000000000000000000000000000000000000)
+            t4: RedeemVerifier_Honk.G1Point({
+                x: uint256(0x0000000000000000000000000000000000000000000000000000000000000000),
+                y: uint256(0x0000000000000000000000000000000000000000000000000000000000000000)
             }),
-            id1: RedeemVerifier_Honk.G1Point({ 
-               x: uint256(0x28f2e7013e9fc8afd52a292f8cd513da335780311a251d6d19280bc143680059),
-               y: uint256(0x1418424217c34fafcceafb933ae4ee495c95a2a2d95fa26c7be792499a0b5d10)
+            id1: RedeemVerifier_Honk.G1Point({
+                x: uint256(0x28f2e7013e9fc8afd52a292f8cd513da335780311a251d6d19280bc143680059),
+                y: uint256(0x1418424217c34fafcceafb933ae4ee495c95a2a2d95fa26c7be792499a0b5d10)
             }),
-            id2: RedeemVerifier_Honk.G1Point({ 
-               x: uint256(0x04b55b5d502ba810a5e46f32c4d65038020d9217faf427d7b7642d0190ff03d8),
-               y: uint256(0x16c8125fefaf128c60ef2bf120759a38e9569c40ce0360ef40d302829191c3bf)
+            id2: RedeemVerifier_Honk.G1Point({
+                x: uint256(0x04b55b5d502ba810a5e46f32c4d65038020d9217faf427d7b7642d0190ff03d8),
+                y: uint256(0x16c8125fefaf128c60ef2bf120759a38e9569c40ce0360ef40d302829191c3bf)
             }),
-            id3: RedeemVerifier_Honk.G1Point({ 
-               x: uint256(0x029d8968a36c8dda8654af76dde85026b30bf015023f94148d3f244c31316d66),
-               y: uint256(0x0368426f623723389a6796817827742e4922a8578ca8de041ae9e960fcceb9ee)
+            id3: RedeemVerifier_Honk.G1Point({
+                x: uint256(0x029d8968a36c8dda8654af76dde85026b30bf015023f94148d3f244c31316d66),
+                y: uint256(0x0368426f623723389a6796817827742e4922a8578ca8de041ae9e960fcceb9ee)
             }),
-            id4: RedeemVerifier_Honk.G1Point({ 
-               x: uint256(0x2e9aead498fb428a9788fd1674c3033ff2a61d613f966303bfa24ab79021f06f),
-               y: uint256(0x0680f043a323c5f8ddee2d1dd829517529c0ce4d84052962b61d88bf922acfb8)
+            id4: RedeemVerifier_Honk.G1Point({
+                x: uint256(0x2e9aead498fb428a9788fd1674c3033ff2a61d613f966303bfa24ab79021f06f),
+                y: uint256(0x0680f043a323c5f8ddee2d1dd829517529c0ce4d84052962b61d88bf922acfb8)
             }),
-            lagrangeFirst: RedeemVerifier_Honk.G1Point({ 
-               x: uint256(0x2a56ce41f6b0be13b9c26747621b821eee81b23a887f299049b14c11e98460d6),
-               y: uint256(0x1aa98f2de3ddda547d8f6de4e725ded5827d6338c78656c0d12ca1aea6ef2c7c)
+            lagrangeFirst: RedeemVerifier_Honk.G1Point({
+                x: uint256(0x2a56ce41f6b0be13b9c26747621b821eee81b23a887f299049b14c11e98460d6),
+                y: uint256(0x1aa98f2de3ddda547d8f6de4e725ded5827d6338c78656c0d12ca1aea6ef2c7c)
             }),
-            lagrangeLast: RedeemVerifier_Honk.G1Point({ 
-               x: uint256(0x0c39ee331dc2ec607281de5f58666a46ee08c7f0b3d5311ce99fcadd5eb2a825),
-               y: uint256(0x2f479681b8ec68a6254bd993ed3e2eaa274bf3226f3f967231d2f23e4c048c60)
+            lagrangeLast: RedeemVerifier_Honk.G1Point({
+                x: uint256(0x0c39ee331dc2ec607281de5f58666a46ee08c7f0b3d5311ce99fcadd5eb2a825),
+                y: uint256(0x2f479681b8ec68a6254bd993ed3e2eaa274bf3226f3f967231d2f23e4c048c60)
             })
         });
         return vk;
@@ -201,7 +202,7 @@ library RedeemVerifier_FrLib {
             mstore(add(free, 0x20), 0x20)
             mstore(add(free, 0x40), 0x20)
             mstore(add(free, 0x60), v)
-            mstore(add(free, 0x80), sub(MODULUS, 2)) 
+            mstore(add(free, 0x80), sub(MODULUS, 2))
             mstore(add(free, 0xa0), MODULUS)
             let success := staticcall(gas(), 0x05, free, 0xc0, 0x00, 0x20)
             if iszero(success) {
@@ -228,7 +229,7 @@ library RedeemVerifier_FrLib {
             mstore(add(free, 0x20), 0x20)
             mstore(add(free, 0x40), 0x20)
             mstore(add(free, 0x60), b)
-            mstore(add(free, 0x80), v) 
+            mstore(add(free, 0x80), v)
             mstore(add(free, 0xa0), MODULUS)
             let success := staticcall(gas(), 0x05, free, 0xc0, 0x00, 0x20)
             if iszero(success) {
@@ -578,7 +579,8 @@ library RedeemVerifier_ZKTranscriptLib {
             round0[1 + i] = publicInputs[i];
         }
         for (uint256 i = 0; i < PAIRING_POINTS_SIZE; i++) {
-            round0[1 + publicInputsSize - PAIRING_POINTS_SIZE + i] = RedeemVerifier_FrLib.toBytes32(proof.pairingPointObject[i]);
+            round0[1 + publicInputsSize - PAIRING_POINTS_SIZE + i] =
+                RedeemVerifier_FrLib.toBytes32(proof.pairingPointObject[i]);
         }
 
         // For ZK flavors: hash the gemini masking poly commitment (sent right after public inputs)
@@ -646,7 +648,8 @@ library RedeemVerifier_ZKTranscriptLib {
         pure
         returns (Fr[CONST_PROOF_SIZE_LOG_N] memory gateChallenges, Fr nextPreviousChallenge)
     {
-        previousChallenge = RedeemVerifier_FrLib.from(uint256(keccak256(abi.encodePacked(Fr.unwrap(previousChallenge)))) % P);
+        previousChallenge =
+            RedeemVerifier_FrLib.from(uint256(keccak256(abi.encodePacked(Fr.unwrap(previousChallenge)))) % P);
         (gateChallenges[0],) = splitChallenge(previousChallenge);
         for (uint256 i = 1; i < logN; i++) {
             gateChallenges[i] = gateChallenges[i - 1] * gateChallenges[i - 1];
@@ -708,7 +711,8 @@ library RedeemVerifier_ZKTranscriptLib {
         rhoChallengeElements[i] = proof.libraCommitments[2].x;
         rhoChallengeElements[i + 1] = proof.libraCommitments[2].y;
 
-        nextPreviousChallenge = RedeemVerifier_FrLib.from(uint256(keccak256(abi.encodePacked(rhoChallengeElements))) % P);
+        nextPreviousChallenge =
+            RedeemVerifier_FrLib.from(uint256(keccak256(abi.encodePacked(rhoChallengeElements))) % P);
         (rho,) = splitChallenge(nextPreviousChallenge);
     }
 
@@ -748,7 +752,8 @@ library RedeemVerifier_ZKTranscriptLib {
             libraIdx++;
         }
 
-        nextPreviousChallenge = RedeemVerifier_FrLib.from(uint256(keccak256(abi.encodePacked(shplonkNuChallengeElements))) % P);
+        nextPreviousChallenge =
+            RedeemVerifier_FrLib.from(uint256(keccak256(abi.encodePacked(shplonkNuChallengeElements))) % P);
         (shplonkNu,) = splitChallenge(nextPreviousChallenge);
     }
 
@@ -763,11 +768,16 @@ library RedeemVerifier_ZKTranscriptLib {
         shplonkZChallengeElements[1] = proof.shplonkQ.x;
         shplonkZChallengeElements[2] = proof.shplonkQ.y;
 
-        nextPreviousChallenge = RedeemVerifier_FrLib.from(uint256(keccak256(abi.encodePacked(shplonkZChallengeElements))) % P);
+        nextPreviousChallenge =
+            RedeemVerifier_FrLib.from(uint256(keccak256(abi.encodePacked(shplonkZChallengeElements))) % P);
         (shplonkZ,) = splitChallenge(nextPreviousChallenge);
     }
 
-    function loadProof(bytes calldata proof, uint256 logN) internal pure returns (RedeemVerifier_Honk.ZKProof memory p) {
+    function loadProof(bytes calldata proof, uint256 logN)
+        internal
+        pure
+        returns (RedeemVerifier_Honk.ZKProof memory p)
+    {
         uint256 boundary = 0x0;
 
         // Pairing point object
@@ -1089,8 +1099,7 @@ library RedeemVerifier_RelationsLib {
         Fr lookup_inverse = wire(p, WIRE.LOOKUP_INVERSES) * table_term;
         Fr table_inverse = wire(p, WIRE.LOOKUP_INVERSES) * lookup_term;
 
-        Fr inverse_exists_xor =
-        wire(p, WIRE.LOOKUP_READ_TAGS) + wire(p, WIRE.Q_LOOKUP)
+        Fr inverse_exists_xor = wire(p, WIRE.LOOKUP_READ_TAGS) + wire(p, WIRE.Q_LOOKUP)
             - (wire(p, WIRE.LOOKUP_READ_TAGS) * wire(p, WIRE.Q_LOOKUP));
 
         // Inverse calculated correctly relation
@@ -1427,7 +1436,7 @@ library RedeemVerifier_RelationsLib {
          */
         ap.limb_subproduct = wire(p, WIRE.W_L) * wire(p, WIRE.W_R_SHIFT) + wire(p, WIRE.W_L_SHIFT) * wire(p, WIRE.W_R);
         ap.non_native_field_gate_2 =
-            (wire(p, WIRE.W_L) * wire(p, WIRE.W_4) + wire(p, WIRE.W_R) * wire(p, WIRE.W_O) - wire(p, WIRE.W_O_SHIFT));
+        (wire(p, WIRE.W_L) * wire(p, WIRE.W_4) + wire(p, WIRE.W_R) * wire(p, WIRE.W_O) - wire(p, WIRE.W_O_SHIFT));
         ap.non_native_field_gate_2 = ap.non_native_field_gate_2 * LIMB_SIZE;
         ap.non_native_field_gate_2 = ap.non_native_field_gate_2 - wire(p, WIRE.W_4_SHIFT);
         ap.non_native_field_gate_2 = ap.non_native_field_gate_2 + ap.limb_subproduct;
@@ -1445,7 +1454,7 @@ library RedeemVerifier_RelationsLib {
         ap.non_native_field_gate_3 = ap.non_native_field_gate_3 * wire(p, WIRE.Q_M);
 
         Fr non_native_field_identity =
-        ap.non_native_field_gate_1 + ap.non_native_field_gate_2 + ap.non_native_field_gate_3;
+            ap.non_native_field_gate_1 + ap.non_native_field_gate_2 + ap.non_native_field_gate_3;
         non_native_field_identity = non_native_field_identity * wire(p, WIRE.Q_R);
 
         // ((((w2' * 2^14 + w1') * 2^14 + w3) * 2^14 + w2) * 2^14 + w1 - w4) * qm
@@ -1621,7 +1630,8 @@ library RedeemVerifier_CommitmentSchemeLib {
             Fr challengePower = geminiEvalChallengePowers[i - 1];
             Fr u = sumcheckUChallenges[i - 1];
 
-            Fr batchedEvalRoundAcc = ((challengePower * batchedEvalAccumulator * Fr.wrap(2)) - geminiEvaluations[i - 1]
+            Fr batchedEvalRoundAcc =
+            ((challengePower * batchedEvalAccumulator * Fr.wrap(2)) - geminiEvaluations[i - 1]
                     * (challengePower * (ONE - u) - u));
             // Divide by the denominator
             batchedEvalRoundAcc = batchedEvalRoundAcc * (challengePower * (ONE - u) + u).invert();
@@ -1731,7 +1741,8 @@ function generateRecursionSeparator(
     // hash the accum X
     // hash the accum Y
 
-    (RedeemVerifier_Honk.G1Point memory proofLhs, RedeemVerifier_Honk.G1Point memory proofRhs) = convertPairingPointsToG1(proofPairingPoints);
+    (RedeemVerifier_Honk.G1Point memory proofLhs, RedeemVerifier_Honk.G1Point memory proofRhs) =
+        convertPairingPointsToG1(proofPairingPoints);
 
     uint256[8] memory recursionSeparatorElements;
 
@@ -1759,10 +1770,11 @@ function generateRecursionSeparator(
  * @param recursionSeperator The separator to use for the multiplication.
  * @return `(recursionSeperator * basePoint) + other`.
  */
-function mulWithSeperator(RedeemVerifier_Honk.G1Point memory basePoint, RedeemVerifier_Honk.G1Point memory other, Fr recursionSeperator)
-    view
-    returns (RedeemVerifier_Honk.G1Point memory)
-{
+function mulWithSeperator(
+    RedeemVerifier_Honk.G1Point memory basePoint,
+    RedeemVerifier_Honk.G1Point memory other,
+    Fr recursionSeperator
+) view returns (RedeemVerifier_Honk.G1Point memory) {
     RedeemVerifier_Honk.G1Point memory result;
 
     result = ecMul(recursionSeperator, basePoint);
@@ -1825,7 +1837,10 @@ function ecMul(Fr value, RedeemVerifier_Honk.G1Point memory point) view returns 
  * @param rhs The right hand side of the addition.
  * @return result The result of the addition.
  */
-function ecAdd(RedeemVerifier_Honk.G1Point memory lhs, RedeemVerifier_Honk.G1Point memory rhs) view returns (RedeemVerifier_Honk.G1Point memory) {
+function ecAdd(RedeemVerifier_Honk.G1Point memory lhs, RedeemVerifier_Honk.G1Point memory rhs)
+    view
+    returns (RedeemVerifier_Honk.G1Point memory)
+{
     RedeemVerifier_Honk.G1Point memory result;
 
     assembly {
@@ -1881,7 +1896,10 @@ function arePairingPointsDefault(Fr[PAIRING_POINTS_SIZE] memory pairingPoints) p
     return acc == 0;
 }
 
-function pairing(RedeemVerifier_Honk.G1Point memory rhs, RedeemVerifier_Honk.G1Point memory lhs) view returns (bool decodedResult) {
+function pairing(RedeemVerifier_Honk.G1Point memory rhs, RedeemVerifier_Honk.G1Point memory lhs)
+    view
+    returns (bool decodedResult)
+{
     bytes memory input = abi.encodePacked(
         rhs.x,
         rhs.y,
@@ -1959,13 +1977,17 @@ abstract contract RedeemVerifier_BaseZKHonkVerifier is RedeemVerifier_IVerifier 
 
         // Check the received proof is the expected size where each field element is 32 bytes
         require(
-            proof.length == expectedProofSize, RedeemVerifier_Errors.ProofLengthWrongWithLogN($LOG_N, proof.length, expectedProofSize)
+            proof.length == expectedProofSize,
+            RedeemVerifier_Errors.ProofLengthWrongWithLogN($LOG_N, proof.length, expectedProofSize)
         );
 
         RedeemVerifier_Honk.VerificationKey memory vk = loadVerificationKey();
         RedeemVerifier_Honk.ZKProof memory p = RedeemVerifier_ZKTranscriptLib.loadProof(proof, $LOG_N);
 
-        require(publicInputs.length == vk.publicInputsSize - PAIRING_POINTS_SIZE, RedeemVerifier_Errors.PublicInputsLengthWrong());
+        require(
+            publicInputs.length == vk.publicInputsSize - PAIRING_POINTS_SIZE,
+            RedeemVerifier_Errors.PublicInputsLengthWrong()
+        );
 
         // Generate the fiat shamir challenges for the whole protocol
         ZKTranscript memory t =
@@ -2026,7 +2048,11 @@ abstract contract RedeemVerifier_BaseZKHonkVerifier is RedeemVerifier_IVerifier 
         publicInputDelta = RedeemVerifier_FrLib.div(numerator, denominator);
     }
 
-    function verifySumcheck(RedeemVerifier_Honk.ZKProof memory proof, ZKTranscript memory tp) internal view returns (bool verified) {
+    function verifySumcheck(RedeemVerifier_Honk.ZKProof memory proof, ZKTranscript memory tp)
+        internal
+        view
+        returns (bool verified)
+    {
         Fr roundTargetSum = tp.libraChallenge * proof.libraSum; // default 0
         Fr powPartialEvaluation = Fr.wrap(1);
 
@@ -2095,7 +2121,8 @@ abstract contract RedeemVerifier_BaseZKHonkVerifier is RedeemVerifier_IVerifier 
 
         Fr[ZK_BATCHED_RELATION_PARTIAL_LENGTH] memory denominatorInverses;
         for (uint256 i = 0; i < ZK_BATCHED_RELATION_PARTIAL_LENGTH; ++i) {
-            denominatorInverses[i] = RedeemVerifier_FrLib.invert(BARYCENTRIC_LAGRANGE_DENOMINATORS[i] * (roundChallenge - Fr.wrap(i)));
+            denominatorInverses[i] =
+                RedeemVerifier_FrLib.invert(BARYCENTRIC_LAGRANGE_DENOMINATORS[i] * (roundChallenge - Fr.wrap(i)));
         }
 
         for (uint256 i = 0; i < ZK_BATCHED_RELATION_PARTIAL_LENGTH; ++i) {
@@ -2106,15 +2133,16 @@ abstract contract RedeemVerifier_BaseZKHonkVerifier is RedeemVerifier_IVerifier 
         targetSum = targetSum * numeratorValue;
     }
 
-    function verifyShplemini(RedeemVerifier_Honk.ZKProof memory proof, RedeemVerifier_Honk.VerificationKey memory vk, ZKTranscript memory tp)
-        internal
-        view
-        returns (bool verified)
-    {
+    function verifyShplemini(
+        RedeemVerifier_Honk.ZKProof memory proof,
+        RedeemVerifier_Honk.VerificationKey memory vk,
+        ZKTranscript memory tp
+    ) internal view returns (bool verified) {
         RedeemVerifier_CommitmentSchemeLib.ShpleminiIntermediates memory mem; // stack
 
         // - Compute vector (r, r², ... , r²⁽ⁿ⁻¹⁾), where n = log_circuit_size
-        Fr[] memory powers_of_evaluation_challenge = RedeemVerifier_CommitmentSchemeLib.computeSquares(tp.geminiR, $LOG_N);
+        Fr[] memory powers_of_evaluation_challenge =
+            RedeemVerifier_CommitmentSchemeLib.computeSquares(tp.geminiR, $LOG_N);
         // Arrays hold values that will be linearly combined for the gemini and shplonk batch openings
         Fr[] memory scalars = new Fr[]($MSMSize);
         RedeemVerifier_Honk.G1Point[] memory commitments = new RedeemVerifier_Honk.G1Point[]($MSMSize);
@@ -2485,7 +2513,7 @@ abstract contract RedeemVerifier_BaseZKHonkVerifier is RedeemVerifier_IVerifier 
 }
 
 contract RedeemVerifier is RedeemVerifier_BaseZKHonkVerifier(N, LOG_N, VK_HASH, NUMBER_OF_PUBLIC_INPUTS) {
-     function loadVerificationKey() internal pure override returns (RedeemVerifier_Honk.VerificationKey memory) {
-       return RedeemVerifier_HonkVerificationKey.loadVerificationKey();
+    function loadVerificationKey() internal pure override returns (RedeemVerifier_Honk.VerificationKey memory) {
+        return RedeemVerifier_HonkVerificationKey.loadVerificationKey();
     }
 }

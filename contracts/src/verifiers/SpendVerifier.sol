@@ -6,123 +6,124 @@ uint256 constant N = 32768;
 uint256 constant LOG_N = 15;
 uint256 constant NUMBER_OF_PUBLIC_INPUTS = 20;
 uint256 constant VK_HASH = 0x174d9c4d8c28b06da7a90e258c3a9232eae3c734b7b2bb65cd1c647ef8fe27e2;
+
 library SpendVerifier_HonkVerificationKey {
     function loadVerificationKey() internal pure returns (SpendVerifier_Honk.VerificationKey memory) {
         SpendVerifier_Honk.VerificationKey memory vk = SpendVerifier_Honk.VerificationKey({
             circuitSize: uint256(32768),
             logCircuitSize: uint256(15),
             publicInputsSize: uint256(20),
-            ql: SpendVerifier_Honk.G1Point({ 
-               x: uint256(0x2ddb3d622ac019772b08102a4c7cc9128b4f972f1d9731e6494323fda94aad38),
-               y: uint256(0x1d3a4f51d8458be7717e11f6b1dfb5b51e007e24c74d105a2a38440861304ae4)
+            ql: SpendVerifier_Honk.G1Point({
+                x: uint256(0x2ddb3d622ac019772b08102a4c7cc9128b4f972f1d9731e6494323fda94aad38),
+                y: uint256(0x1d3a4f51d8458be7717e11f6b1dfb5b51e007e24c74d105a2a38440861304ae4)
             }),
-            qr: SpendVerifier_Honk.G1Point({ 
-               x: uint256(0x23625e8b762b67f243ae0620aec063f9a8626801f88ef65ae6451ec75b71cc15),
-               y: uint256(0x235a877625f114663338259965b41096e02c7f42bad05138c894d11233a39489)
+            qr: SpendVerifier_Honk.G1Point({
+                x: uint256(0x23625e8b762b67f243ae0620aec063f9a8626801f88ef65ae6451ec75b71cc15),
+                y: uint256(0x235a877625f114663338259965b41096e02c7f42bad05138c894d11233a39489)
             }),
-            qo: SpendVerifier_Honk.G1Point({ 
-               x: uint256(0x0df7f05ba8936b7fb5698017a97849f6410e10c3a46aa6f57f302c81c70aa8b4),
-               y: uint256(0x1dd4206ba675c0850fc5bc68b3cf9bb211f79b111c18a020b9776f91b7871f55)
+            qo: SpendVerifier_Honk.G1Point({
+                x: uint256(0x0df7f05ba8936b7fb5698017a97849f6410e10c3a46aa6f57f302c81c70aa8b4),
+                y: uint256(0x1dd4206ba675c0850fc5bc68b3cf9bb211f79b111c18a020b9776f91b7871f55)
             }),
-            q4: SpendVerifier_Honk.G1Point({ 
-               x: uint256(0x107ec1fb8923f06e1d3e124e44c2bd7458941eaf27063a0737b59b8465d41f8d),
-               y: uint256(0x28c16fa6594bd76b375c5bb8f7fc21f533ff0aa6b0698682113a87b573eb9b49)
+            q4: SpendVerifier_Honk.G1Point({
+                x: uint256(0x107ec1fb8923f06e1d3e124e44c2bd7458941eaf27063a0737b59b8465d41f8d),
+                y: uint256(0x28c16fa6594bd76b375c5bb8f7fc21f533ff0aa6b0698682113a87b573eb9b49)
             }),
-            qm: SpendVerifier_Honk.G1Point({ 
-               x: uint256(0x0e8a1180f060a8bc9c42e1a285965794e890f78a51b2bcd9fac89f337b162b45),
-               y: uint256(0x2a60509764dc2efcc6f488606283a3358d3b67316157636ec95664c2ffce5984)
+            qm: SpendVerifier_Honk.G1Point({
+                x: uint256(0x0e8a1180f060a8bc9c42e1a285965794e890f78a51b2bcd9fac89f337b162b45),
+                y: uint256(0x2a60509764dc2efcc6f488606283a3358d3b67316157636ec95664c2ffce5984)
             }),
-            qc: SpendVerifier_Honk.G1Point({ 
-               x: uint256(0x23c7ec99e73c2a35dfdc98e92a0f30c12d0e50ab5dbf0e644b02c802eaafa75e),
-               y: uint256(0x22ada24c6c994ea93cd7907c73b7c0aa220c5bac15fcd2e4cd316a3c7c0a7269)
+            qc: SpendVerifier_Honk.G1Point({
+                x: uint256(0x23c7ec99e73c2a35dfdc98e92a0f30c12d0e50ab5dbf0e644b02c802eaafa75e),
+                y: uint256(0x22ada24c6c994ea93cd7907c73b7c0aa220c5bac15fcd2e4cd316a3c7c0a7269)
             }),
-            qLookup: SpendVerifier_Honk.G1Point({ 
-               x: uint256(0x0000000000000000000000000000000000000000000000000000000000000000),
-               y: uint256(0x0000000000000000000000000000000000000000000000000000000000000000)
+            qLookup: SpendVerifier_Honk.G1Point({
+                x: uint256(0x0000000000000000000000000000000000000000000000000000000000000000),
+                y: uint256(0x0000000000000000000000000000000000000000000000000000000000000000)
             }),
-            qArith: SpendVerifier_Honk.G1Point({ 
-               x: uint256(0x1fb593c3e7faed938c97abbb02a469fae943a055afd97170e754c7793dfd8a85),
-               y: uint256(0x1406fdfc1238b54d2597bf161744a4b1d1319a36a96a6bf7f736e8525e072065)
+            qArith: SpendVerifier_Honk.G1Point({
+                x: uint256(0x1fb593c3e7faed938c97abbb02a469fae943a055afd97170e754c7793dfd8a85),
+                y: uint256(0x1406fdfc1238b54d2597bf161744a4b1d1319a36a96a6bf7f736e8525e072065)
             }),
-            qDeltaRange: SpendVerifier_Honk.G1Point({ 
-               x: uint256(0x032fda8570a88a4038ff7a0ec8393073e980ed51897026b1785a60be2044d810),
-               y: uint256(0x301ed507c1070c1b7e72350e80125eefe9f71656a232b57a978366575a58d836)
+            qDeltaRange: SpendVerifier_Honk.G1Point({
+                x: uint256(0x032fda8570a88a4038ff7a0ec8393073e980ed51897026b1785a60be2044d810),
+                y: uint256(0x301ed507c1070c1b7e72350e80125eefe9f71656a232b57a978366575a58d836)
             }),
-            qElliptic: SpendVerifier_Honk.G1Point({ 
-               x: uint256(0x0000000000000000000000000000000000000000000000000000000000000000),
-               y: uint256(0x0000000000000000000000000000000000000000000000000000000000000000)
+            qElliptic: SpendVerifier_Honk.G1Point({
+                x: uint256(0x0000000000000000000000000000000000000000000000000000000000000000),
+                y: uint256(0x0000000000000000000000000000000000000000000000000000000000000000)
             }),
-            qMemory: SpendVerifier_Honk.G1Point({ 
-               x: uint256(0x0000000000000000000000000000000000000000000000000000000000000000),
-               y: uint256(0x0000000000000000000000000000000000000000000000000000000000000000)
+            qMemory: SpendVerifier_Honk.G1Point({
+                x: uint256(0x0000000000000000000000000000000000000000000000000000000000000000),
+                y: uint256(0x0000000000000000000000000000000000000000000000000000000000000000)
             }),
-            qNnf: SpendVerifier_Honk.G1Point({ 
-               x: uint256(0x0000000000000000000000000000000000000000000000000000000000000000),
-               y: uint256(0x0000000000000000000000000000000000000000000000000000000000000000)
+            qNnf: SpendVerifier_Honk.G1Point({
+                x: uint256(0x0000000000000000000000000000000000000000000000000000000000000000),
+                y: uint256(0x0000000000000000000000000000000000000000000000000000000000000000)
             }),
-            qPoseidon2External: SpendVerifier_Honk.G1Point({ 
-               x: uint256(0x0000000000000000000000000000000000000000000000000000000000000000),
-               y: uint256(0x0000000000000000000000000000000000000000000000000000000000000000)
+            qPoseidon2External: SpendVerifier_Honk.G1Point({
+                x: uint256(0x0000000000000000000000000000000000000000000000000000000000000000),
+                y: uint256(0x0000000000000000000000000000000000000000000000000000000000000000)
             }),
-            qPoseidon2Internal: SpendVerifier_Honk.G1Point({ 
-               x: uint256(0x0000000000000000000000000000000000000000000000000000000000000000),
-               y: uint256(0x0000000000000000000000000000000000000000000000000000000000000000)
+            qPoseidon2Internal: SpendVerifier_Honk.G1Point({
+                x: uint256(0x0000000000000000000000000000000000000000000000000000000000000000),
+                y: uint256(0x0000000000000000000000000000000000000000000000000000000000000000)
             }),
-            s1: SpendVerifier_Honk.G1Point({ 
-               x: uint256(0x0a2ccb2c6d14eadc88cceb06255d9128e2329e17249e74c16746fc8a2c17fa9f),
-               y: uint256(0x283e990daac9480e1a44ad96990707fad32170d78c12babcd4fe055ddb3fcd8c)
+            s1: SpendVerifier_Honk.G1Point({
+                x: uint256(0x0a2ccb2c6d14eadc88cceb06255d9128e2329e17249e74c16746fc8a2c17fa9f),
+                y: uint256(0x283e990daac9480e1a44ad96990707fad32170d78c12babcd4fe055ddb3fcd8c)
             }),
-            s2: SpendVerifier_Honk.G1Point({ 
-               x: uint256(0x27c70cb2710af6ccfea8ed0defafa7848b3f8b2539fe619bf8dab9e544e90589),
-               y: uint256(0x2c32c2220fe8b6882e7ef49a1222d038be9c8fac17cc71d1ada4f079f469d2ce)
+            s2: SpendVerifier_Honk.G1Point({
+                x: uint256(0x27c70cb2710af6ccfea8ed0defafa7848b3f8b2539fe619bf8dab9e544e90589),
+                y: uint256(0x2c32c2220fe8b6882e7ef49a1222d038be9c8fac17cc71d1ada4f079f469d2ce)
             }),
-            s3: SpendVerifier_Honk.G1Point({ 
-               x: uint256(0x2eeb5b544cb985cf598bbbb2cbb8e348d23f9790e4a742a529b247aa6779158e),
-               y: uint256(0x05cd7f00a014285e6304f184f52dd4585fa5aff9bab83cbaa7142296796dbe9a)
+            s3: SpendVerifier_Honk.G1Point({
+                x: uint256(0x2eeb5b544cb985cf598bbbb2cbb8e348d23f9790e4a742a529b247aa6779158e),
+                y: uint256(0x05cd7f00a014285e6304f184f52dd4585fa5aff9bab83cbaa7142296796dbe9a)
             }),
-            s4: SpendVerifier_Honk.G1Point({ 
-               x: uint256(0x0330b92de0d48adb547c962084eedd1140fed74d639e1689e668c107146ef526),
-               y: uint256(0x0f682677d4181000857e985182c299a9f5dc2cf416c6e39aa4ed177595245992)
+            s4: SpendVerifier_Honk.G1Point({
+                x: uint256(0x0330b92de0d48adb547c962084eedd1140fed74d639e1689e668c107146ef526),
+                y: uint256(0x0f682677d4181000857e985182c299a9f5dc2cf416c6e39aa4ed177595245992)
             }),
-            t1: SpendVerifier_Honk.G1Point({ 
-               x: uint256(0x0000000000000000000000000000000000000000000000000000000000000000),
-               y: uint256(0x0000000000000000000000000000000000000000000000000000000000000000)
+            t1: SpendVerifier_Honk.G1Point({
+                x: uint256(0x0000000000000000000000000000000000000000000000000000000000000000),
+                y: uint256(0x0000000000000000000000000000000000000000000000000000000000000000)
             }),
-            t2: SpendVerifier_Honk.G1Point({ 
-               x: uint256(0x0000000000000000000000000000000000000000000000000000000000000000),
-               y: uint256(0x0000000000000000000000000000000000000000000000000000000000000000)
+            t2: SpendVerifier_Honk.G1Point({
+                x: uint256(0x0000000000000000000000000000000000000000000000000000000000000000),
+                y: uint256(0x0000000000000000000000000000000000000000000000000000000000000000)
             }),
-            t3: SpendVerifier_Honk.G1Point({ 
-               x: uint256(0x0000000000000000000000000000000000000000000000000000000000000000),
-               y: uint256(0x0000000000000000000000000000000000000000000000000000000000000000)
+            t3: SpendVerifier_Honk.G1Point({
+                x: uint256(0x0000000000000000000000000000000000000000000000000000000000000000),
+                y: uint256(0x0000000000000000000000000000000000000000000000000000000000000000)
             }),
-            t4: SpendVerifier_Honk.G1Point({ 
-               x: uint256(0x0000000000000000000000000000000000000000000000000000000000000000),
-               y: uint256(0x0000000000000000000000000000000000000000000000000000000000000000)
+            t4: SpendVerifier_Honk.G1Point({
+                x: uint256(0x0000000000000000000000000000000000000000000000000000000000000000),
+                y: uint256(0x0000000000000000000000000000000000000000000000000000000000000000)
             }),
-            id1: SpendVerifier_Honk.G1Point({ 
-               x: uint256(0x25dbfe9d5411c2e3055d77c7ad20b4a39fe66c2af4185b571c49e1a2f9a030d1),
-               y: uint256(0x05fcade5a685ef76c7f7517162205e6f4864cf1aa69ffcfe99e64a20ff64b837)
+            id1: SpendVerifier_Honk.G1Point({
+                x: uint256(0x25dbfe9d5411c2e3055d77c7ad20b4a39fe66c2af4185b571c49e1a2f9a030d1),
+                y: uint256(0x05fcade5a685ef76c7f7517162205e6f4864cf1aa69ffcfe99e64a20ff64b837)
             }),
-            id2: SpendVerifier_Honk.G1Point({ 
-               x: uint256(0x1e9317cebc85c69e89b3095db95d875baa71da0300702ef4b91b501f6d777cf2),
-               y: uint256(0x1d46933ff3376f838ce01763bfe7bb0e5832a5bfc39032268b4300cf39352159)
+            id2: SpendVerifier_Honk.G1Point({
+                x: uint256(0x1e9317cebc85c69e89b3095db95d875baa71da0300702ef4b91b501f6d777cf2),
+                y: uint256(0x1d46933ff3376f838ce01763bfe7bb0e5832a5bfc39032268b4300cf39352159)
             }),
-            id3: SpendVerifier_Honk.G1Point({ 
-               x: uint256(0x067f8a86afbb27c2f13e7af9c7f64e5c1e1812428474e000ff2a37f84f66ae0e),
-               y: uint256(0x139fefc6d3881376cdf68b0ef2cdd948dbaabf8c696b28f1b581680445adcb3f)
+            id3: SpendVerifier_Honk.G1Point({
+                x: uint256(0x067f8a86afbb27c2f13e7af9c7f64e5c1e1812428474e000ff2a37f84f66ae0e),
+                y: uint256(0x139fefc6d3881376cdf68b0ef2cdd948dbaabf8c696b28f1b581680445adcb3f)
             }),
-            id4: SpendVerifier_Honk.G1Point({ 
-               x: uint256(0x241c23bf7e1d043d867e09fc413295b2bd781513757f37af2a947c95167c8812),
-               y: uint256(0x0e40cadb960b649e60a9835d611e71a4c1fd2705acaa958b3c3714e66ac7747e)
+            id4: SpendVerifier_Honk.G1Point({
+                x: uint256(0x241c23bf7e1d043d867e09fc413295b2bd781513757f37af2a947c95167c8812),
+                y: uint256(0x0e40cadb960b649e60a9835d611e71a4c1fd2705acaa958b3c3714e66ac7747e)
             }),
-            lagrangeFirst: SpendVerifier_Honk.G1Point({ 
-               x: uint256(0x2a56ce41f6b0be13b9c26747621b821eee81b23a887f299049b14c11e98460d6),
-               y: uint256(0x1aa98f2de3ddda547d8f6de4e725ded5827d6338c78656c0d12ca1aea6ef2c7c)
+            lagrangeFirst: SpendVerifier_Honk.G1Point({
+                x: uint256(0x2a56ce41f6b0be13b9c26747621b821eee81b23a887f299049b14c11e98460d6),
+                y: uint256(0x1aa98f2de3ddda547d8f6de4e725ded5827d6338c78656c0d12ca1aea6ef2c7c)
             }),
-            lagrangeLast: SpendVerifier_Honk.G1Point({ 
-               x: uint256(0x0155bec08e2a5d2d8d0fead4dc8a1335260ed71360f4926e41ae837edac3fba2),
-               y: uint256(0x056f4137b417c871aa7944d11b85bcb24cc3dc11806d9fff8b07478d6b99a3f3)
+            lagrangeLast: SpendVerifier_Honk.G1Point({
+                x: uint256(0x0155bec08e2a5d2d8d0fead4dc8a1335260ed71360f4926e41ae837edac3fba2),
+                y: uint256(0x056f4137b417c871aa7944d11b85bcb24cc3dc11806d9fff8b07478d6b99a3f3)
             })
         });
         return vk;
@@ -201,7 +202,7 @@ library SpendVerifier_FrLib {
             mstore(add(free, 0x20), 0x20)
             mstore(add(free, 0x40), 0x20)
             mstore(add(free, 0x60), v)
-            mstore(add(free, 0x80), sub(MODULUS, 2)) 
+            mstore(add(free, 0x80), sub(MODULUS, 2))
             mstore(add(free, 0xa0), MODULUS)
             let success := staticcall(gas(), 0x05, free, 0xc0, 0x00, 0x20)
             if iszero(success) {
@@ -228,7 +229,7 @@ library SpendVerifier_FrLib {
             mstore(add(free, 0x20), 0x20)
             mstore(add(free, 0x40), 0x20)
             mstore(add(free, 0x60), b)
-            mstore(add(free, 0x80), v) 
+            mstore(add(free, 0x80), v)
             mstore(add(free, 0xa0), MODULUS)
             let success := staticcall(gas(), 0x05, free, 0xc0, 0x00, 0x20)
             if iszero(success) {
@@ -578,7 +579,8 @@ library SpendVerifier_ZKTranscriptLib {
             round0[1 + i] = publicInputs[i];
         }
         for (uint256 i = 0; i < PAIRING_POINTS_SIZE; i++) {
-            round0[1 + publicInputsSize - PAIRING_POINTS_SIZE + i] = SpendVerifier_FrLib.toBytes32(proof.pairingPointObject[i]);
+            round0[1 + publicInputsSize - PAIRING_POINTS_SIZE + i] =
+                SpendVerifier_FrLib.toBytes32(proof.pairingPointObject[i]);
         }
 
         // For ZK flavors: hash the gemini masking poly commitment (sent right after public inputs)
@@ -646,7 +648,8 @@ library SpendVerifier_ZKTranscriptLib {
         pure
         returns (Fr[CONST_PROOF_SIZE_LOG_N] memory gateChallenges, Fr nextPreviousChallenge)
     {
-        previousChallenge = SpendVerifier_FrLib.from(uint256(keccak256(abi.encodePacked(Fr.unwrap(previousChallenge)))) % P);
+        previousChallenge =
+            SpendVerifier_FrLib.from(uint256(keccak256(abi.encodePacked(Fr.unwrap(previousChallenge)))) % P);
         (gateChallenges[0],) = splitChallenge(previousChallenge);
         for (uint256 i = 1; i < logN; i++) {
             gateChallenges[i] = gateChallenges[i - 1] * gateChallenges[i - 1];
@@ -748,7 +751,8 @@ library SpendVerifier_ZKTranscriptLib {
             libraIdx++;
         }
 
-        nextPreviousChallenge = SpendVerifier_FrLib.from(uint256(keccak256(abi.encodePacked(shplonkNuChallengeElements))) % P);
+        nextPreviousChallenge =
+            SpendVerifier_FrLib.from(uint256(keccak256(abi.encodePacked(shplonkNuChallengeElements))) % P);
         (shplonkNu,) = splitChallenge(nextPreviousChallenge);
     }
 
@@ -763,7 +767,8 @@ library SpendVerifier_ZKTranscriptLib {
         shplonkZChallengeElements[1] = proof.shplonkQ.x;
         shplonkZChallengeElements[2] = proof.shplonkQ.y;
 
-        nextPreviousChallenge = SpendVerifier_FrLib.from(uint256(keccak256(abi.encodePacked(shplonkZChallengeElements))) % P);
+        nextPreviousChallenge =
+            SpendVerifier_FrLib.from(uint256(keccak256(abi.encodePacked(shplonkZChallengeElements))) % P);
         (shplonkZ,) = splitChallenge(nextPreviousChallenge);
     }
 
@@ -1089,8 +1094,7 @@ library SpendVerifier_RelationsLib {
         Fr lookup_inverse = wire(p, WIRE.LOOKUP_INVERSES) * table_term;
         Fr table_inverse = wire(p, WIRE.LOOKUP_INVERSES) * lookup_term;
 
-        Fr inverse_exists_xor =
-        wire(p, WIRE.LOOKUP_READ_TAGS) + wire(p, WIRE.Q_LOOKUP)
+        Fr inverse_exists_xor = wire(p, WIRE.LOOKUP_READ_TAGS) + wire(p, WIRE.Q_LOOKUP)
             - (wire(p, WIRE.LOOKUP_READ_TAGS) * wire(p, WIRE.Q_LOOKUP));
 
         // Inverse calculated correctly relation
@@ -1427,7 +1431,7 @@ library SpendVerifier_RelationsLib {
          */
         ap.limb_subproduct = wire(p, WIRE.W_L) * wire(p, WIRE.W_R_SHIFT) + wire(p, WIRE.W_L_SHIFT) * wire(p, WIRE.W_R);
         ap.non_native_field_gate_2 =
-            (wire(p, WIRE.W_L) * wire(p, WIRE.W_4) + wire(p, WIRE.W_R) * wire(p, WIRE.W_O) - wire(p, WIRE.W_O_SHIFT));
+        (wire(p, WIRE.W_L) * wire(p, WIRE.W_4) + wire(p, WIRE.W_R) * wire(p, WIRE.W_O) - wire(p, WIRE.W_O_SHIFT));
         ap.non_native_field_gate_2 = ap.non_native_field_gate_2 * LIMB_SIZE;
         ap.non_native_field_gate_2 = ap.non_native_field_gate_2 - wire(p, WIRE.W_4_SHIFT);
         ap.non_native_field_gate_2 = ap.non_native_field_gate_2 + ap.limb_subproduct;
@@ -1445,7 +1449,7 @@ library SpendVerifier_RelationsLib {
         ap.non_native_field_gate_3 = ap.non_native_field_gate_3 * wire(p, WIRE.Q_M);
 
         Fr non_native_field_identity =
-        ap.non_native_field_gate_1 + ap.non_native_field_gate_2 + ap.non_native_field_gate_3;
+            ap.non_native_field_gate_1 + ap.non_native_field_gate_2 + ap.non_native_field_gate_3;
         non_native_field_identity = non_native_field_identity * wire(p, WIRE.Q_R);
 
         // ((((w2' * 2^14 + w1') * 2^14 + w3) * 2^14 + w2) * 2^14 + w1 - w4) * qm
@@ -1621,7 +1625,8 @@ library SpendVerifier_CommitmentSchemeLib {
             Fr challengePower = geminiEvalChallengePowers[i - 1];
             Fr u = sumcheckUChallenges[i - 1];
 
-            Fr batchedEvalRoundAcc = ((challengePower * batchedEvalAccumulator * Fr.wrap(2)) - geminiEvaluations[i - 1]
+            Fr batchedEvalRoundAcc =
+            ((challengePower * batchedEvalAccumulator * Fr.wrap(2)) - geminiEvaluations[i - 1]
                     * (challengePower * (ONE - u) - u));
             // Divide by the denominator
             batchedEvalRoundAcc = batchedEvalRoundAcc * (challengePower * (ONE - u) + u).invert();
@@ -1731,7 +1736,8 @@ function generateRecursionSeparator(
     // hash the accum X
     // hash the accum Y
 
-    (SpendVerifier_Honk.G1Point memory proofLhs, SpendVerifier_Honk.G1Point memory proofRhs) = convertPairingPointsToG1(proofPairingPoints);
+    (SpendVerifier_Honk.G1Point memory proofLhs, SpendVerifier_Honk.G1Point memory proofRhs) =
+        convertPairingPointsToG1(proofPairingPoints);
 
     uint256[8] memory recursionSeparatorElements;
 
@@ -1759,10 +1765,11 @@ function generateRecursionSeparator(
  * @param recursionSeperator The separator to use for the multiplication.
  * @return `(recursionSeperator * basePoint) + other`.
  */
-function mulWithSeperator(SpendVerifier_Honk.G1Point memory basePoint, SpendVerifier_Honk.G1Point memory other, Fr recursionSeperator)
-    view
-    returns (SpendVerifier_Honk.G1Point memory)
-{
+function mulWithSeperator(
+    SpendVerifier_Honk.G1Point memory basePoint,
+    SpendVerifier_Honk.G1Point memory other,
+    Fr recursionSeperator
+) view returns (SpendVerifier_Honk.G1Point memory) {
     SpendVerifier_Honk.G1Point memory result;
 
     result = ecMul(recursionSeperator, basePoint);
@@ -1825,7 +1832,10 @@ function ecMul(Fr value, SpendVerifier_Honk.G1Point memory point) view returns (
  * @param rhs The right hand side of the addition.
  * @return result The result of the addition.
  */
-function ecAdd(SpendVerifier_Honk.G1Point memory lhs, SpendVerifier_Honk.G1Point memory rhs) view returns (SpendVerifier_Honk.G1Point memory) {
+function ecAdd(SpendVerifier_Honk.G1Point memory lhs, SpendVerifier_Honk.G1Point memory rhs)
+    view
+    returns (SpendVerifier_Honk.G1Point memory)
+{
     SpendVerifier_Honk.G1Point memory result;
 
     assembly {
@@ -1881,7 +1891,10 @@ function arePairingPointsDefault(Fr[PAIRING_POINTS_SIZE] memory pairingPoints) p
     return acc == 0;
 }
 
-function pairing(SpendVerifier_Honk.G1Point memory rhs, SpendVerifier_Honk.G1Point memory lhs) view returns (bool decodedResult) {
+function pairing(SpendVerifier_Honk.G1Point memory rhs, SpendVerifier_Honk.G1Point memory lhs)
+    view
+    returns (bool decodedResult)
+{
     bytes memory input = abi.encodePacked(
         rhs.x,
         rhs.y,
@@ -1959,13 +1972,17 @@ abstract contract SpendVerifier_BaseZKHonkVerifier is SpendVerifier_IVerifier {
 
         // Check the received proof is the expected size where each field element is 32 bytes
         require(
-            proof.length == expectedProofSize, SpendVerifier_Errors.ProofLengthWrongWithLogN($LOG_N, proof.length, expectedProofSize)
+            proof.length == expectedProofSize,
+            SpendVerifier_Errors.ProofLengthWrongWithLogN($LOG_N, proof.length, expectedProofSize)
         );
 
         SpendVerifier_Honk.VerificationKey memory vk = loadVerificationKey();
         SpendVerifier_Honk.ZKProof memory p = SpendVerifier_ZKTranscriptLib.loadProof(proof, $LOG_N);
 
-        require(publicInputs.length == vk.publicInputsSize - PAIRING_POINTS_SIZE, SpendVerifier_Errors.PublicInputsLengthWrong());
+        require(
+            publicInputs.length == vk.publicInputsSize - PAIRING_POINTS_SIZE,
+            SpendVerifier_Errors.PublicInputsLengthWrong()
+        );
 
         // Generate the fiat shamir challenges for the whole protocol
         ZKTranscript memory t =
@@ -2026,7 +2043,11 @@ abstract contract SpendVerifier_BaseZKHonkVerifier is SpendVerifier_IVerifier {
         publicInputDelta = SpendVerifier_FrLib.div(numerator, denominator);
     }
 
-    function verifySumcheck(SpendVerifier_Honk.ZKProof memory proof, ZKTranscript memory tp) internal view returns (bool verified) {
+    function verifySumcheck(SpendVerifier_Honk.ZKProof memory proof, ZKTranscript memory tp)
+        internal
+        view
+        returns (bool verified)
+    {
         Fr roundTargetSum = tp.libraChallenge * proof.libraSum; // default 0
         Fr powPartialEvaluation = Fr.wrap(1);
 
@@ -2095,7 +2116,8 @@ abstract contract SpendVerifier_BaseZKHonkVerifier is SpendVerifier_IVerifier {
 
         Fr[ZK_BATCHED_RELATION_PARTIAL_LENGTH] memory denominatorInverses;
         for (uint256 i = 0; i < ZK_BATCHED_RELATION_PARTIAL_LENGTH; ++i) {
-            denominatorInverses[i] = SpendVerifier_FrLib.invert(BARYCENTRIC_LAGRANGE_DENOMINATORS[i] * (roundChallenge - Fr.wrap(i)));
+            denominatorInverses[i] =
+                SpendVerifier_FrLib.invert(BARYCENTRIC_LAGRANGE_DENOMINATORS[i] * (roundChallenge - Fr.wrap(i)));
         }
 
         for (uint256 i = 0; i < ZK_BATCHED_RELATION_PARTIAL_LENGTH; ++i) {
@@ -2106,15 +2128,16 @@ abstract contract SpendVerifier_BaseZKHonkVerifier is SpendVerifier_IVerifier {
         targetSum = targetSum * numeratorValue;
     }
 
-    function verifyShplemini(SpendVerifier_Honk.ZKProof memory proof, SpendVerifier_Honk.VerificationKey memory vk, ZKTranscript memory tp)
-        internal
-        view
-        returns (bool verified)
-    {
+    function verifyShplemini(
+        SpendVerifier_Honk.ZKProof memory proof,
+        SpendVerifier_Honk.VerificationKey memory vk,
+        ZKTranscript memory tp
+    ) internal view returns (bool verified) {
         SpendVerifier_CommitmentSchemeLib.ShpleminiIntermediates memory mem; // stack
 
         // - Compute vector (r, r², ... , r²⁽ⁿ⁻¹⁾), where n = log_circuit_size
-        Fr[] memory powers_of_evaluation_challenge = SpendVerifier_CommitmentSchemeLib.computeSquares(tp.geminiR, $LOG_N);
+        Fr[] memory powers_of_evaluation_challenge =
+            SpendVerifier_CommitmentSchemeLib.computeSquares(tp.geminiR, $LOG_N);
         // Arrays hold values that will be linearly combined for the gemini and shplonk batch openings
         Fr[] memory scalars = new Fr[]($MSMSize);
         SpendVerifier_Honk.G1Point[] memory commitments = new SpendVerifier_Honk.G1Point[]($MSMSize);
@@ -2485,7 +2508,7 @@ abstract contract SpendVerifier_BaseZKHonkVerifier is SpendVerifier_IVerifier {
 }
 
 contract SpendVerifier is SpendVerifier_BaseZKHonkVerifier(N, LOG_N, VK_HASH, NUMBER_OF_PUBLIC_INPUTS) {
-     function loadVerificationKey() internal pure override returns (SpendVerifier_Honk.VerificationKey memory) {
-       return SpendVerifier_HonkVerificationKey.loadVerificationKey();
+    function loadVerificationKey() internal pure override returns (SpendVerifier_Honk.VerificationKey memory) {
+        return SpendVerifier_HonkVerificationKey.loadVerificationKey();
     }
 }

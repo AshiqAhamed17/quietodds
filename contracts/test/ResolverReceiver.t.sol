@@ -22,7 +22,7 @@ contract ResolverReceiverTest is Test {
         markets.setResolver(address(receiver));
         closeTime = uint64(block.timestamp + 1 hours);
         for (uint256 i = 0; i < 3; i++) {
-            markets.createMarket("m", 2, closeTime, Markets.Source.Sports, "", address(0), 0);
+            markets.createMarket("m", "Yes|No", 2, closeTime, Markets.Source.Sports, "", address(0), 0);
             vm.prank(pool);
             markets.addBet(i + 1, 0, 1e6);
         }

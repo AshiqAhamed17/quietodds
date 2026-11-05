@@ -55,7 +55,9 @@ contract ShieldedPoolTest is Test {
         markets.setPool(address(pool));
         markets.setResolver(resolver);
         closeTime = uint64(block.timestamp + 1 hours);
-        markets.createMarket("India vs Australia", 2, closeTime, Markets.Source.Sports, "espn:1", address(0), 0);
+        markets.createMarket(
+            "India vs Australia", "India|Australia", 2, closeTime, Markets.Source.Sports, "espn:1", address(0), 0
+        );
 
         usdc.mint(priya, 100e6);
         usdc.mint(arjun, 100e6);

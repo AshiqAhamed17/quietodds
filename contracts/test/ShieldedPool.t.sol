@@ -84,6 +84,15 @@ contract ShieldedPoolTest is Test {
         a.recipient = address(uint160(uint256(pi[11])));
     }
 
+    function _redeemArgs(bytes32[] memory pi) internal pure returns (ShieldedPool.RedeemArgs memory a) {
+        a.root = uint256(pi[0]);
+        a.nullifierHash = uint256(pi[1]);
+        a.kind = uint256(pi[2]);
+        a.id = uint256(pi[3]);
+        a.outCommitment = uint256(pi[9]);
+        a.relayer = address(uint160(uint256(pi[10])));
+        a.fee = uint256(pi[11]);
+    }
 
     function _deposit(address who, string memory key) internal {
         string memory story = vm.readFile("test/fixtures/story.json");
@@ -100,6 +109,11 @@ contract ShieldedPoolTest is Test {
         pool.spend(_spendArgs(pi), proof, hex"bb", hex"cc");
     }
 
+    function _redeem(string memory name) internal {
+        (bytes memory proof, bytes32[] memory pi) = _fixture(name);
+        vm.prank(relayer);
+        pool.redeem(_redeemArgs(pi), proof, hex"dd");
+    }
 
     function _bothBet() internal {
         _deposit(priya, ".priyaDepositPrecommitment");
@@ -220,6 +234,116 @@ contract ShieldedPoolTest is Test {
     function test_onlyPoolCanAddBets() public {
         vm.expectRevert(Markets.NotPool.selector);
         markets.addBet(1, 0, 1_000e6);
+    }
+
+    // --- redeem --------------------------------------------------------------
+
+    function test_winnerClaimsHiddenPayout() public {
+        _bothBet();
+        vm.warp(closeTime);
+        vm.prank(resolver);
+        markets.resolve(1, 0);
+
+        uint256 relayerBefore = usdc.balanceOf(relayer);
+        _redeem("redeem_priya_win");
+        assertEq(usdc.balanceOf(relayer) - relayerBefore, 0.5e6);
+        assertEq(pool.nextLeafIndex(), 7);
+        assertEq(pool.getLastRoot(), _rootAfter("withdraw_priya"));
+    }
+
+    function test_redeemBeforeResolutionRejected() public {
+        _bothBet();
+        (bytes memory proof, bytes32[] memory pi) = _fixture("redeem_priya_win");
+        vm.prank(relayer);
+        vm.expectRevert(Markets.NotFinal.selector);
+        pool.redeem(_redeemArgs(pi), proof, "");
+    }
+
+    function test_winProofFailsWhenOtherSideWon() public {
+        _bothBet();
+        vm.warp(closeTime);
+        vm.prank(resolver);
+        markets.resolve(1, 1);
+        (bytes memory proof, bytes32[] memory pi) = _fixture("redeem_priya_win");
+        vm.prank(relayer);
+        vm.expectRevert(ShieldedPool.InvalidProof.selector);
+        pool.redeem(_redeemArgs(pi), proof, "");
+    }
+
+    function test_cannotClaimTwice() public {
+        _bothBet();
+        vm.warp(closeTime);
+        vm.prank(resolver);
+        markets.resolve(1, 0);
+        _redeem("redeem_priya_win");
+        (bytes memory proof, bytes32[] memory pi) = _fixture("redeem_priya_win");
+        vm.prank(relayer);
+        vm.expectRevert(ShieldedPool.NullifierSpent.selector);
+        pool.redeem(_redeemArgs(pi), proof, "");
+    }
+
+    function test_refundWhenCancelled() public {
+        _bothBet();
+        vm.prank(resolver);
+        markets.cancel(1);
+        _redeem("redeem_arjun_refund");
+        assertEq(pool.nextLeafIndex(), 7);
+    }
+
+    function test_refundProofFailsOnResolvedMarket() public {
+        _bothBet();
+        vm.warp(closeTime);
+        vm.prank(resolver);
+        markets.resolve(1, 0);
+        (bytes memory proof, bytes32[] memory pi) = _fixture("redeem_arjun_refund");
+        vm.prank(relayer);
+        vm.expectRevert(ShieldedPool.InvalidProof.selector);
+        pool.redeem(_redeemArgs(pi), proof, "");
+    }
+
+    function test_unknownRedeemKindRejected() public {
+        _bothBet();
+        (bytes memory proof, bytes32[] memory pi) = _fixture("redeem_priya_win");
+        ShieldedPool.RedeemArgs memory a = _redeemArgs(pi);
+        a.kind = 7;
+        vm.prank(relayer);
+        vm.expectRevert(ShieldedPool.BadKind.selector);
+        pool.redeem(a, proof, "");
+    }
+
+    // --- withdraw + full story -----------------------------------------------
+
+    function test_fullStoryAndSolvency() public {
+        _bothBet();
+        vm.warp(closeTime);
+        vm.prank(resolver);
+        markets.resolve(1, 0);
+        _redeem("redeem_priya_win");
+        _spend("withdraw_priya");
+
+        assertEq(usdc.balanceOf(recipient), 48e6);
+        assertEq(pool.nextLeafIndex(), 8);
+
+        // In: 200. Out: relayer fees 1 + 1 + 0.5 + 1, withdrawal 48.
+        uint256 poolBalance = usdc.balanceOf(address(pool));
+        assertEq(poolBalance, 148.5e6);
+        // Owed: Priya's winnings 128.2 + Arjun's change 19 + Priya's 0 change
+        // + protocol fee 1.3 for LPs. Rounding dust would stay in the pool.
+        assertEq(poolBalance, 128.2e6 + 19e6 + 0 + markets.feesAccrued());
+    }
+
+    function test_tamperedRecipientRejected() public {
+        _bothBet();
+        vm.warp(closeTime);
+        vm.prank(resolver);
+        markets.resolve(1, 0);
+        _redeem("redeem_priya_win");
+        (bytes memory proof, bytes32[] memory pi) = _fixture("withdraw_priya");
+        ShieldedPool.SpendArgs memory a = _spendArgs(pi);
+        a.recipient = makeAddr("thief");
+        vm.prank(relayer);
+        vm.expectRevert(ShieldedPool.InvalidProof.selector);
+        pool.spend(a, proof, "", "");
     }
 
     function test_spendGas() public {

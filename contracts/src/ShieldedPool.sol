@@ -54,6 +54,18 @@ contract ShieldedPool is PoseidonMerkleTree, ReentrancyGuard {
         address recipient;
     }
 
+    /// Caller-supplied public inputs of the `redeem` circuit. The ratio, side
+    /// rule and output asset are filled in from contract state.
+    struct RedeemArgs {
+        uint256 root;
+        uint256 nullifierHash;
+        uint256 kind;
+        uint256 id;
+        uint256 outCommitment;
+        address relayer;
+        uint256 fee;
+    }
+
     IVerifier public immutable spendVerifier;
     IVerifier public immutable redeemVerifier;
     Markets public immutable markets;
@@ -63,6 +75,7 @@ contract ShieldedPool is PoseidonMerkleTree, ReentrancyGuard {
 
     event Deposit(address indexed from, uint256 indexed asset, uint256 amount, uint256 leafIndex);
     event Spend(uint256 indexed nullifierHash, uint256 indexed actionType, uint256 asset, uint256 publicAmount);
+    event Redeem(uint256 indexed nullifierHash, uint256 indexed kind, uint256 indexed id);
     event Withdrawal(address indexed recipient, uint256 indexed asset, uint256 amount);
 
     error UnknownAsset();
@@ -74,6 +87,7 @@ contract ShieldedPool is PoseidonMerkleTree, ReentrancyGuard {
     error UnknownAction();
     error BetsAreUsdcOnly();
     error ZeroRecipient();
+    error BadKind();
 
     constructor(IVerifier spendVerifier_, IVerifier redeemVerifier_, Markets markets_, IERC20 usdc, IERC20 weth) {
         spendVerifier = spendVerifier_;
@@ -157,6 +171,50 @@ contract ShieldedPool is PoseidonMerkleTree, ReentrancyGuard {
 
         if (a.fee > 0) token.safeTransfer(msg.sender, a.fee);
         emit Spend(a.nullifierHash, a.actionType, a.asset, a.publicAmount);
+    }
+
+    // --- redeem --------------------------------------------------------------
+
+    /// @notice Turns a winning (or refunded) position into a hidden balance
+    ///         note. The payout ratio comes from Markets, never from the caller,
+    ///         so a losing position cannot produce a valid proof.
+    function redeem(RedeemArgs calldata a, bytes calldata proof, bytes calldata outCiphertext) external nonReentrant {
+        _checkNullifier(a.root, a.nullifierHash, a.relayer);
+        if (a.fee > MAX_AMOUNT) revert BadAmount();
+
+        uint256 num;
+        uint256 den;
+        uint256 requiredSide;
+        bool anySide;
+        uint256 assetOut;
+        if (a.kind == TAG_POSITION) {
+            uint8 side;
+            (num, den, side, anySide) = markets.redeemTerms(a.id);
+            requiredSide = side;
+            assetOut = ASSET_USDC;
+        } else {
+            revert BadKind();
+        }
+
+        bytes32[] memory inputs = new bytes32[](12);
+        inputs[0] = bytes32(a.root);
+        inputs[1] = bytes32(a.nullifierHash);
+        inputs[2] = bytes32(a.kind);
+        inputs[3] = bytes32(a.id);
+        inputs[4] = bytes32(requiredSide);
+        inputs[5] = bytes32(anySide ? uint256(1) : 0);
+        inputs[6] = bytes32(num);
+        inputs[7] = bytes32(den);
+        inputs[8] = bytes32(assetOut);
+        inputs[9] = bytes32(a.outCommitment);
+        inputs[10] = bytes32(uint256(uint160(a.relayer)));
+        inputs[11] = bytes32(a.fee);
+        _verify(redeemVerifier, proof, inputs);
+
+        nullified[a.nullifierHash] = true;
+        _insert(a.outCommitment, outCiphertext);
+        if (a.fee > 0) _token(assetOut).safeTransfer(msg.sender, a.fee);
+        emit Redeem(a.nullifierHash, a.kind, a.id);
     }
 
     // --- internals -----------------------------------------------------------

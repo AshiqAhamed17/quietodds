@@ -5,11 +5,15 @@
   "scripts": {
     "poseidon-parity": "node poseidon-parity.mjs",
     "anon-rpc-smoke": "node anon-rpc-smoke/run.mjs",
-    "fixtures": "node gen-fixtures.mjs"
+    "fixtures": "node gen-fixtures.mjs",
+    "e2e": "tsx e2e.ts"
   },
   "dependencies": {
     "@anon-rpc/browser-harness": "^0.4.0",
-    "poseidon-lite": "^0.3.0"
+    "poseidon-lite": "^0.3.0",
+    "@quietodds/lib": "0.1.0",
+    "viem": "^2.40.0",
+    "tsx": "^4.23.15"
   },
   "devDependencies": {
     "esbuild": "^0.28.2",

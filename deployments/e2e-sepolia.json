@@ -1,0 +1,63 @@
+{
+  "network": "sepolia",
+  "pool": "0x4fF62a3fDb324348ac988e23b5468BE016b15D55",
+  "markets": "0xcff79Cc227b8bE772B28d910d059Ac5fF81d3854",
+  "relayer": "http://localhost:8787",
+  "steps": [
+    {
+      "step": "createMarket",
+      "tx": "0x8f821292a9352ad5f47926ecd48c56412338bd7e8fe9b82b02d5312760c61883",
+      "gasUsed": "814555"
+    },
+    {
+      "step": "priya: approve",
+      "tx": "0x04991b0e310749c55a1409a30d2b4f4849d6b9ca7dd44b79e005d93ce9a5d8e5",
+      "gasUsed": "137757"
+    },
+    {
+      "step": "priya: deposit 10 USDC",
+      "tx": "0x3b3f28ed412b6c5ad2e47aa61c49e9a4cd8aa520de40aed83b6a1adee061a4d3",
+      "gasUsed": "3321031"
+    },
+    {
+      "step": "rahul: approve",
+      "tx": "0x90f953ddbde7d7642f7581a3c8cd59d9b1081fbabbcbf6a4a0afbed395efaf64",
+      "gasUsed": "137757"
+    },
+    {
+      "step": "rahul: deposit 10 USDC",
+      "tx": "0x8bab119eeae31c3bd9d7cc6e6822fd4cb8112a4903f2c1cc4cfa679a02b9ccb3",
+      "gasUsed": "1156696"
+    },
+    {
+      "step": "priya: private bet 4 USDC on side 0 (relayed)",
+      "tx": "0x32156420901f9c14101713290397bbbfdb913172a51bd888aadeb7169077d85b",
+      "gasUsed": "6110116"
+    },
+    {
+      "step": "rahul: private bet 6 USDC on side 2 (relayed)",
+      "tx": "0x3dfaa555fb2573c6f3808a71aa7e74721571db76f1ea9fd6cb9b39392d82cde3",
+      "gasUsed": "5914314"
+    },
+    {
+      "step": "CRE resolver report -> ResolverReceiver",
+      "tx": "0x0306f8ce26fe8d4e08997af92b623352248d73ae16e9ec7ffb048264d6831ca4",
+      "gasUsed": "423284"
+    },
+    {
+      "step": "rahul: private claim of 9.9 USDC (relayed)",
+      "tx": "0x003cdb138859ffbdbac8ce3e55082b5aad3380d39e7f50938df678b92a818269",
+      "gasUsed": "4881426"
+    },
+    {
+      "step": "rahul: withdraw 9.8 USDC to fresh 0x1cA2603Cd321a142d8f5170ac298223E2C48F728 (relayed)",
+      "tx": "0xd624daf33d87829bc74a1ac58f470a05da86d64adc35b276c7949b35a793f0e9",
+      "gasUsed": "4978333"
+    }
+  ],
+  "marketId": "8",
+  "closeTime": "1793920332",
+  "freshAddress": "0x1cA2603Cd321a142d8f5170ac298223E2C48F728",
+  "freshBalance": "9800000",
+  "completedAt": "2026-11-05T23:13:03.478Z"
+}

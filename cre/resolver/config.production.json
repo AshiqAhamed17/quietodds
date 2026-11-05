@@ -5,5 +5,5 @@
   "receiver": "0x053F4fd9b560a0C5a32B4Bd56cbe20B5300F1E51",
   "readAt": "finalized",
   "maxMarketsPerRun": 4,
-  "gasLimit": "2000000"
+  "gasLimit": "5000000"
 }

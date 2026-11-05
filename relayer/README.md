@@ -29,3 +29,18 @@ npm test             # anvil + DeployLocal + full deposit/bet/redeem/withdraw
 
 Optional env: `PORT` (8787), `CORS_ORIGIN` (*), `RELAYER_RPC_URL`,
 `RELAYER_SPEND_GAS`, `RELAYER_REDEEM_GAS`, `RELAYER_MIN_FEE_USDC`.
+
+## Deploy (Vercel)
+
+The relayer runs as one Vercel Node function, built locally with the Build
+Output API (esbuild bundle + bb.js's linux WASM/binary) and uploaded prebuilt:
+
+```sh
+vercel link --project quietodds-relayer          # once
+vercel env add RELAYER_PRIVATE_KEY production --sensitive   # once, paste the key
+vercel env add SEPOLIA_RPC_URL production                   # once
+npm run deploy -w relayer
+```
+
+A warm instance serves requests in order, so nonces don't collide; the
+function may run up to 300s while it waits for a receipt.

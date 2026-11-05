@@ -22,3 +22,4 @@ CLAUDE.md
 # Generated per-fixture witnesses
 circuits/**/Prover_*.toml
 deployments/quietodds-local.json
+relayer/.vercel/

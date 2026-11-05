@@ -3,7 +3,7 @@
 // on-chain verifiers (nargo 1.0.0-beta.25, bb 5.1.0); a drift here gives
 // proofs that verify locally but fail on chain.
 import { Barretenberg, UltraHonkBackend } from "@aztec/bb.js";
-import { Noir, type CompiledCircuit } from "@noir-lang/noir_js";
+import type { CompiledCircuit, Noir } from "@noir-lang/noir_js";
 import { bytesToHex, hexToBytes, type Hex } from "viem";
 import type { InputMap } from "./witness.ts";
 
@@ -23,7 +23,7 @@ const loaders: Record<CircuitName, () => Promise<CompiledCircuit>> = {
 };
 
 export class Prover {
-  private circuits = new Map<CircuitName, { noir: Noir; backend: UltraHonkBackend }>();
+  private circuits = new Map<CircuitName, { circuit: CompiledCircuit; backend: UltraHonkBackend; noir?: Noir }>();
 
   private constructor(private api: Barretenberg) {}
 
@@ -36,15 +36,18 @@ export class Prover {
     let c = this.circuits.get(name);
     if (!c) {
       const circuit = await loaders[name]();
-      c = { noir: new Noir(circuit), backend: new UltraHonkBackend(circuit.bytecode, this.api) };
+      c = { circuit, backend: new UltraHonkBackend(circuit.bytecode, this.api) };
       this.circuits.set(name, c);
     }
     return c;
   }
 
   async prove(name: CircuitName, inputs: InputMap): Promise<Proof> {
-    const { noir, backend } = await this.load(name);
-    const { witness } = await noir.execute(inputs);
+    const c = await this.load(name);
+    // noir_js only executes witnesses; verify-only users (the relayer) never load it.
+    if (!c.noir) c.noir = new (await import("@noir-lang/noir_js")).Noir(c.circuit);
+    const { witness } = await c.noir.execute(inputs);
+    const backend = c.backend;
     const { proof, publicInputs } = await backend.generateProof(witness, TARGET);
     return { proof: bytesToHex(proof), publicInputs: publicInputs.map((p) => p as Hex) };
   }

@@ -11,6 +11,8 @@ address and fee, so it can only submit a call exactly as the user built it.
 | `POST /spend` | `{ args: SpendArgs, proof, changeCiphertext, outCiphertext }` (bet or withdraw) |
 | `POST /redeem` | `{ args: RedeemArgs, proof, outCiphertext }` |
 
+Live: https://quietodds-relayer.vercel.app
+
 Bigints are decimal strings; `spendBody` / `redeemBody` / `relayerApi` in `@quietodds/lib` build them.
 
 Before sending, it checks the proof names this relayer and pays at least the

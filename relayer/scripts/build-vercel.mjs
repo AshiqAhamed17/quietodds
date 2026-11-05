@@ -20,7 +20,7 @@ await build({
   outfile: join(FUNC, "index.mjs"),
   bundle: true,
   platform: "node",
-  target: "node20",
+  target: "node22",
   format: "esm",
   external: ["@aztec/bb.js", "@noir-lang/noir_js"],
   banner: { js: "import { createRequire as __cr } from 'module'; const require = __cr(import.meta.url);" },
@@ -40,7 +40,7 @@ writeFileSync(join(FUNC, "package.json"), JSON.stringify({ type: "module" }));
 
 writeFileSync(
   join(FUNC, ".vc-config.json"),
-  JSON.stringify({ runtime: "nodejs20.x", handler: "index.mjs", launcherType: "Nodejs", maxDuration: 300, memory: 2048, shouldAddHelpers: false, supportsResponseStreaming: true }, null, 2),
+  JSON.stringify({ runtime: "nodejs22.x", handler: "index.mjs", launcherType: "Nodejs", maxDuration: 300, memory: 2048, shouldAddHelpers: false, supportsResponseStreaming: true }, null, 2),
 );
 writeFileSync(join(OUT, "config.json"), JSON.stringify({ version: 3, routes: [{ src: "/(.*)", dest: "/index" }] }, null, 2));
 console.log("built .vercel/output");

@@ -9,3 +9,4 @@ export * from "./chain.ts";
 export * from "./witness.ts";
 export * from "./abi.ts";
 export * from "./deployments.ts";
+export * from "./relay.ts";

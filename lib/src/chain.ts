@@ -24,7 +24,7 @@ export async function fetchPoolState(
   fromBlock: bigint,
   { chunk = 40_000n, toBlock }: { chunk?: bigint; toBlock?: bigint } = {},
 ): Promise<PoolState> {
-  const end = toBlock ?? (await client.getBlockNumber());
+  const end = toBlock ?? (await client.getBlockNumber({ cacheTime: 0 }));
   const leaves: PoolLeaf[] = [];
   const nullifiers = new Set<bigint>();
   for (let start = fromBlock; start <= end; start += chunk) {

@@ -3,9 +3,15 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "poseidon-parity": "node poseidon-parity.mjs"
+    "poseidon-parity": "node poseidon-parity.mjs",
+    "anon-rpc-smoke": "node anon-rpc-smoke/run.mjs"
   },
   "dependencies": {
+    "@anon-rpc/browser-harness": "^0.4.0",
     "poseidon-lite": "^0.3.0"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2",
+    "playwright": "^1.64.1"
   }
 }

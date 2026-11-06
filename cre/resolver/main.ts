@@ -68,6 +68,12 @@ const batchesAbi = parseAbi([
 	'function isExecutable(uint256 batchId) view returns (bool)',
 ])
 const feesAbi = parseAbi(['function feesAccrued() view returns (uint256)'])
+const MULTICALL3 = '0xcA11bde05977b3631167028862bE2a173976CA11'
+const multicallAbi = parseAbi([
+	'struct Call3 { address target; bool allowFailure; bytes callData; }',
+	'struct Result { bool success; bytes returnData; }',
+	'function aggregate3(Call3[] calls) payable returns (Result[] returnData)',
+])
 const feedAbi = parseAbi([
 	'function latestRoundData() view returns (uint80, int256, uint256, uint256, uint80)',
 ])
@@ -101,29 +107,63 @@ export const onCron = (runtime: Runtime<Config>): string => {
 		return decodeFunctionResult({ abi, functionName, data: bytesToHex(res.data) } as never) as unknown
 	}
 
+	// CRE caps chain reads per run (15), so everything is read through Multicall3:
+	// one call for every market plus the batch/fee state, one for batch readiness
+	// and one for the price feeds of the closed price markets. Four reads total,
+	// however many markets exist.
+	type Call = { to: string; abi: readonly unknown[]; functionName: string; args?: unknown[] }
+	const multi = (calls: Call[]): unknown[] => {
+		if (calls.length === 0) return []
+		const results = read(MULTICALL3, multicallAbi, 'aggregate3', [
+			calls.map((c) => ({
+				target: c.to as Address,
+				allowFailure: false,
+				callData: encodeFunctionData({ abi: c.abi, functionName: c.functionName, args: c.args ?? [] } as never),
+			})),
+		]) as { success: boolean; returnData: Hex }[]
+		return results.map((r, i) => decodeFunctionResult({ abi: calls[i].abi, functionName: calls[i].functionName, data: r.returnData } as never))
+	}
+
 	const now = BigInt(Math.floor(runtime.now().getTime() / 1000))
 	const count = read(cfg.markets, marketsAbi, 'marketCount') as bigint
+	const ids = Array.from({ length: Number(count) }, (_, i) => BigInt(i + 1))
+	const state = multi([
+		...ids.map((id) => ({ to: cfg.markets, abi: marketsAbi, functionName: 'getMarket', args: [id] })),
+		{ to: cfg.batches, abi: batchesAbi, functionName: 'currentBatch', args: [0] },
+		{ to: cfg.batches, abi: batchesAbi, functionName: 'currentBatch', args: [1] },
+		{ to: cfg.markets, abi: feesAbi, functionName: 'feesAccrued' },
+	])
+	type M = {
+		question: string
+		outcomes: string
+		numSides: number
+		closeTime: bigint
+		source: number
+		sourceRef: string
+		priceFeed: Address
+		threshold: bigint
+		status: number
+	}
+	const due = ids
+		.map((id, i) => ({ id, m: state[i] as M }))
+		.filter(({ m }) => m.status === STATUS_OPEN && m.closeTime <= now)
+		.slice(0, cfg.maxMarketsPerRun)
+	const [batch0, batch1, fees] = state.slice(ids.length) as [bigint, bigint, bigint]
+
+	const priced = due.filter(({ m }) => m.source === SOURCE_PRICE)
+	const rounds = multi(priced.map(({ m }) => ({ to: m.priceFeed, abi: feedAbi, functionName: 'latestRoundData' }))) as [
+		bigint,
+		bigint,
+		bigint,
+		bigint,
+		bigint,
+	][]
+
 	const actions: Action[] = []
-	let checked = 0
-
-	for (let id = 1n; id <= count && checked < cfg.maxMarketsPerRun; id++) {
-		const m = read(cfg.markets, marketsAbi, 'getMarket', [id]) as {
-			question: string
-			outcomes: string
-			numSides: number
-			closeTime: bigint
-			source: number
-			sourceRef: string
-			priceFeed: Address
-			threshold: bigint
-			status: number
-		}
-		if (m.status !== STATUS_OPEN || m.closeTime > now) continue
-		checked++
-
+	for (const { id, m } of due) {
 		let code: number
 		if (m.source === SOURCE_PRICE) {
-			const [, price, , updatedAt] = read(m.priceFeed, feedAbi, 'latestRoundData') as [bigint, bigint, bigint, bigint, bigint]
+			const [, price, , updatedAt] = rounds[priced.findIndex((p) => p.id === id)]
 			code = priceOutcome(price, updatedAt, m.closeTime, m.threshold)
 		} else if (m.source === SOURCE_SPORTS) {
 			code = http
@@ -141,14 +181,11 @@ export const onCron = (runtime: Runtime<Config>): string => {
 		runtime.log(`market ${id} "${m.question}": ${action ? `kind ${action.kind} outcome ${action.outcome}` : 'no result yet'}`)
 		if (action) actions.push(action)
 	}
+	const checked = due.length
 
 	// Upkeep: ready batches (USDC->WETH, WETH->USDC) and the LP donation.
-	const ready: bigint[] = []
-	for (const direction of [0, 1]) {
-		const id = read(cfg.batches, batchesAbi, 'currentBatch', [direction]) as bigint
-		if (read(cfg.batches, batchesAbi, 'isExecutable', [id]) as boolean) ready.push(id)
-	}
-	const fees = read(cfg.markets, feesAbi, 'feesAccrued') as bigint
+	const executable = multi([batch0, batch1].map((id) => ({ to: cfg.batches, abi: batchesAbi, functionName: 'isExecutable', args: [id] }))) as boolean[]
+	const ready = [batch0, batch1].filter((_, i) => executable[i])
 	const upkeep = upkeepActions(ready, fees, actions)
 	for (const a of upkeep) runtime.log(a.kind === 3 ? `batch ${a.id} ready to execute` : `donating market fees to LPs`)
 	actions.push(...upkeep)

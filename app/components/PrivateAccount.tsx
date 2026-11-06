@@ -8,6 +8,7 @@ import {
   MerkleTree,
   fetchPoolState,
   keysFromSignature,
+  nextNoteIndex,
   scanNotes,
   shieldedBalance,
   type Keys,
@@ -35,6 +36,13 @@ interface PrivateAccount {
   tree: MerkleTree | null;
   scan: ScanState;
   rescan: () => Promise<void>;
+  /** Fresh notes and tree, straight from the chain, for building a proof. */
+  sync: () => Promise<{ notes: OwnedNote[]; tree: MerkleTree }>;
+  /**
+   * Claims `count` unused note indices. Indices are reserved locally until the
+   * chain shows them used, so two quick actions never derive the same note.
+   */
+  reserveIndices: (notes: readonly OwnedNote[], count: number) => number;
   balances: { usdc: bigint; weth: bigint };
 }
 
@@ -60,6 +68,7 @@ export function PrivateAccountProvider({ children }: { children: React.ReactNode
   const [tree, setTree] = useState<MerkleTree | null>(null);
   const [scan, setScan] = useState<ScanState>({ phase: "idle", progress: 0, detail: "" });
   const scanId = useRef(0);
+  const reserved = useRef(0);
 
   // A different wallet is a different private account.
   useEffect(() => {
@@ -67,11 +76,12 @@ export function PrivateAccountProvider({ children }: { children: React.ReactNode
     setNotes([]);
     setTree(null);
     setScan({ phase: "idle", progress: 0, detail: "" });
+    reserved.current = 0;
   }, [address]);
 
   const runScan = useCallback(
-    async (k: Keys) => {
-      if (!client) return;
+    async (k: Keys): Promise<{ notes: OwnedNote[]; tree: MerkleTree } | null> => {
+      if (!client) return null;
       const id = ++scanId.current;
       const live = () => id === scanId.current;
       try {
@@ -83,18 +93,21 @@ export function PrivateAccountProvider({ children }: { children: React.ReactNode
             setScan({ phase: "logs", progress: 0.7 * f, detail: `Scanned ${done.toLocaleString()} of ${total.toLocaleString()} blocks` });
           },
         });
-        if (!live()) return;
+        if (!live()) return null;
         setScan({ phase: "decrypt", progress: 0.7, detail: `Trying ${state.leaves.length} note backups with your viewing key…` });
         const owned = await scanNotes(k, state.leaves, (h) => state.nullifiers.has(h), (done, total) => {
           if (live() && total > 0) setScan({ phase: "decrypt", progress: 0.7 + 0.3 * (done / total), detail: `Decrypted ${done} of ${total} backups` });
         });
-        if (!live()) return;
+        if (!live()) return null;
+        const t = new MerkleTree(state.leaves.map((l) => l.leaf));
         setNotes(owned);
-        setTree(new MerkleTree(state.leaves.map((l) => l.leaf)));
+        setTree(t);
         const mine = owned.filter((n) => !n.spent).length;
         setScan({ phase: "done", progress: 1, detail: `${mine} unspent note${mine === 1 ? "" : "s"} found in ${state.leaves.length} leaves` });
+        return { notes: owned, tree: t };
       } catch (e) {
         if (live()) setScan({ phase: "error", progress: 0, detail: "Scan failed", error: e instanceof Error ? e.message : String(e) });
+        return null;
       }
     },
     [client],
@@ -123,9 +136,22 @@ export function PrivateAccountProvider({ children }: { children: React.ReactNode
     if (keys) await runScan(keys);
   }, [keys, runScan]);
 
+  const sync = useCallback(async () => {
+    if (!keys) throw new Error("Unlock your private account first");
+    const fresh = await runScan(keys);
+    if (!fresh) throw new Error("Couldn't read the pool. Try again.");
+    return fresh;
+  }, [keys, runScan]);
+
+  const reserveIndices = useCallback((current: readonly OwnedNote[], count: number) => {
+    const start = Math.max(nextNoteIndex(current), reserved.current);
+    reserved.current = start + count;
+    return start;
+  }, []);
+
   const balances = { usdc: shieldedBalance(notes, ASSET.USDC), weth: shieldedBalance(notes, ASSET.WETH) };
 
   return (
-    <Ctx.Provider value={{ keys, unlocking, unlock, lock, notes, tree, scan, rescan, balances }}>{children}</Ctx.Provider>
+    <Ctx.Provider value={{ keys, unlocking, unlock, lock, notes, tree, scan, rescan, sync, reserveIndices, balances }}>{children}</Ctx.Provider>
   );
 }

@@ -10,13 +10,14 @@ import { ChartPanel } from "@/components/ChartPanel";
 import { Countdown } from "@/components/Countdown";
 import { AmbientField } from "@/components/AmbientField";
 import { SourceChip } from "@/components/MarketList";
+import { BetForm } from "@/components/BetForm";
 
 const ZERO = "0x0000000000000000000000000000000000000000" as const;
 
 export default function MarketDetailPage() {
   const params = useParams();
   const id = BigInt((params.id as string) || "1");
-  const { market: m } = useMarket(id);
+  const { market: m, refetch } = useMarket(id);
   const isFeed = m?.source === Source.Price;
   const { points, current } = usePriceHistory(isFeed && m ? m.priceFeed : ZERO);
 
@@ -96,6 +97,11 @@ export default function MarketDetailPage() {
                 </a>
               </aside>
             </div>
+            {m.status === Status.Open && !isClosed(m) && (
+              <div style={{ marginTop: "1.4rem", maxWidth: 620 }}>
+                <BetForm m={m} onDone={refetch} />
+              </div>
+            )}
           </>
         )}
       </main>

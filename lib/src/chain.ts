@@ -31,9 +31,9 @@ export async function fetchPoolState(
     const stop = start + chunk - 1n < end ? start + chunk - 1n : end;
     const range = { address: pool, fromBlock: start, toBlock: stop };
     const [inserted, spends, redeems] = await Promise.all([
-      client.getLogs({ ...range, event: LEAF_INSERTED }),
-      client.getLogs({ ...range, event: SPEND }),
-      client.getLogs({ ...range, event: REDEEM }),
+      retry(() => client.getLogs({ ...range, event: LEAF_INSERTED })),
+      retry(() => client.getLogs({ ...range, event: SPEND })),
+      retry(() => client.getLogs({ ...range, event: REDEEM })),
     ]);
     for (const l of inserted) {
       leaves.push({ index: Number(l.args.index!), leaf: l.args.leaf!, ciphertext: l.args.ciphertext! });
@@ -45,4 +45,17 @@ export async function fetchPoolState(
     if (l.index !== i) throw new Error(`missing leaf ${i}: scan from the pool's deploy block`);
   });
   return { leaves, nullifiers, toBlock: end };
+}
+
+/** Load-balanced RPCs can answer from a node a block behind ("range extends
+ *  beyond current head"); a short retry rides that out. */
+async function retry<T>(fn: () => Promise<T>, attempts = 4): Promise<T> {
+  for (let i = 1; ; i++) {
+    try {
+      return await fn();
+    } catch (e) {
+      if (i >= attempts) throw e;
+      await new Promise((r) => setTimeout(r, 1500 * i));
+    }
+  }
 }

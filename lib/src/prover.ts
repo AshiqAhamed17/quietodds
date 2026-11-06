@@ -2,7 +2,7 @@
 // browser or in Node. Versions are pinned to the toolchain that produced the
 // on-chain verifiers (nargo 1.0.0-beta.25, bb 5.1.0); a drift here gives
 // proofs that verify locally but fail on chain.
-import { Barretenberg, UltraHonkBackend } from "@aztec/bb.js";
+import { Barretenberg, UltraHonkBackend, type BackendOptions } from "@aztec/bb.js";
 import type { CompiledCircuit, Noir } from "@noir-lang/noir_js";
 import { bytesToHex, hexToBytes, type Hex } from "viem";
 import type { InputMap } from "./witness.ts";
@@ -25,11 +25,19 @@ const loaders: Record<CircuitName, () => Promise<CompiledCircuit>> = {
 export class Prover {
   private circuits = new Map<CircuitName, { circuit: CompiledCircuit; backend: UltraHonkBackend; noir?: Noir }>();
 
-  private constructor(private api: Barretenberg) {}
+  private constructor(
+    private api: Barretenberg,
+    private onError?: (e: unknown) => void,
+  ) {}
 
-  /** One Barretenberg instance (WASM, multi-threaded where available). */
-  static async create(opts: { threads?: number } = {}): Promise<Prover> {
-    return new Prover(await Barretenberg.new(opts));
+  /**
+   * One Barretenberg instance. `crsPath` must be writable: bb.js downloads its
+   * setup points there (default ~/.bb-crs; serverless hosts only allow /tmp).
+   * `onError` sees internal failures that `verify` otherwise reports as false.
+   */
+  static async create(opts: BackendOptions & { onError?: (e: unknown) => void } = {}): Promise<Prover> {
+    const { onError, ...backend } = opts;
+    return new Prover(await Barretenberg.new(backend), onError);
   }
 
   private async load(name: CircuitName) {
@@ -56,7 +64,8 @@ export class Prover {
     const { backend } = await this.load(name);
     try {
       return await backend.verifyProof({ proof: hexToBytes(proof), publicInputs }, TARGET);
-    } catch {
+    } catch (e) {
+      this.onError?.(e); // malformed proofs land here too
       return false;
     }
   }

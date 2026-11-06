@@ -7,7 +7,7 @@
 ///   3. relay  - send proof + public inputs to the relayer, which pays the gas
 /// The proof binds the relayer's address and fee, so the relayer can only
 /// submit exactly what the user built, or refuse.
-import type { PublicClient } from "viem";
+import { formatUnits, type PublicClient } from "viem";
 import {
   ASSET,
   buildRedeem,
@@ -98,8 +98,10 @@ export async function relayedSpend(p: {
   if (amount <= 0n) throw new Error("Amount must be more than the relayer fee");
   const note = notes.find((n) => n.data.kind === "balance" && n.data.amount >= amount + fee);
   if (!note) {
+    const dec = p.asset === ASSET.USDC ? 6 : 18;
+    const sym = fmtAsset(p.asset);
     throw new Error(
-      `A private action spends one note at a time. Your largest ${fmtAsset(p.asset)} note can cover at most ${largest - fee} (base units) after the relayer fee.`,
+      `Each private action spends one note. Your biggest ${sym} note is ${formatUnits(largest, dec)} ${sym}, so the most you can use is ${formatUnits(largest > fee ? largest - fee : 0n, dec)} ${sym} after the ${formatUnits(fee, dec)} ${sym} relayer fee. Deposit a larger amount (it arrives as one note) or lower the amount.`,
     );
   }
   const withOutput = p.action.type !== "withdraw";

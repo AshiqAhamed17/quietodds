@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { BetQueueList } from "@/components/BetQueue";
+import { Switch } from "@/components/Switch";
 import { ApiSwap } from "@/components/ApiSwap";
 import { betQueue } from "@/lib/betQueue";
 import { formatEther, formatUnits, parseUnits } from "viem";
@@ -210,10 +211,12 @@ function SwapForm() {
             <input inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} />
           </label>
 
-          <label className="toggle">
-            <input type="checkbox" checked={shieldOn} onChange={(e) => { setShieldOn(e.target.checked); if (!e.target.checked) setBetOn(false); }} />
-            Shield USDC into my private balance
-          </label>
+          <Switch
+            checked={shieldOn}
+            onChange={(on) => { setShieldOn(on); if (!on) setBetOn(false); }}
+            title="Shield USDC into my private balance"
+            detail="The hook turns part of the swap into a private note, in the same transaction."
+          />
           {shieldOn && (
             <label>
               Shield amount (USDC) · {usdcIn ? "taken from what you pay" : "taken from the USDC you receive"}
@@ -221,10 +224,13 @@ function SwapForm() {
             </label>
           )}
 
-          <label className="toggle">
-            <input type="checkbox" checked={betOn} disabled={!shieldOn} onChange={(e) => setBetOn(e.target.checked)} />
-            Add a private bet with the shielded USDC
-          </label>
+          <Switch
+            checked={betOn}
+            disabled={!shieldOn}
+            onChange={setBetOn}
+            title="Add a private bet with the shielded USDC"
+            detail={shieldOn ? "Sent by the relayer 1–10 minutes later, so it can't be matched to this swap." : "Turn on shielding first."}
+          />
           {betOn && (
             <>
               <label>

@@ -160,7 +160,7 @@ function Withdraw() {
     });
 
   return (
-    <section className="panel">
+    <section className="panel" id="withdraw">
       <h2>Withdraw privately</h2>
       <div className="form">
         <div className="sides">

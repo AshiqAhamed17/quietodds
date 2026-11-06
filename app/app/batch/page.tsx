@@ -4,7 +4,8 @@ import { useState } from "react";
 import { explorerTx } from "@/lib/contract";
 import { formatUnits, parseUnits } from "viem";
 import { usePublicClient, useReadContract, useReadContracts, useWriteContract } from "wagmi";
-import { ASSET, unspentTickets } from "@quietodds/lib";
+import Link from "next/link";
+import { ASSET, spendableNotes, unspentTickets } from "@quietodds/lib";
 import { AmbientField } from "@/components/AmbientField";
 import { ActionStatus, useAction } from "@/components/ActionStatus";
 import { Countdown } from "@/components/Countdown";
@@ -13,10 +14,11 @@ import { usePrivateAccount } from "@/components/PrivateAccount";
 import { RedeemRow } from "@/components/RedeemRow";
 import { DEPLOYMENT, batchSwapperAbi, explorerAddress } from "@/lib/contract";
 import { relayedSpend } from "@/lib/private";
+import { useRelayFee } from "@/hooks/useRelayFee";
 
 const DIRECTIONS = [
-  { dir: 0, label: "USDC → WETH", asset: ASSET.USDC, inSym: "USDC", outSym: "WETH", inDec: 6, outDec: 18, def: "1" },
-  { dir: 1, label: "WETH → USDC", asset: ASSET.WETH, inSym: "WETH", outSym: "USDC", inDec: 18, outDec: 6, def: "0.0005" },
+  { dir: 0, label: "USDC → WETH", asset: ASSET.USDC, inSym: "USDC", outSym: "WETH", inDec: 6, outDec: 18, def: "1", min: 1_000_000n },
+  { dir: 1, label: "WETH → USDC", asset: ASSET.WETH, inSym: "WETH", outSym: "USDC", inDec: 18, outDec: 6, def: "0.0005", min: 500_000_000_000_000n },
 ] as const;
 
 const fmt = (v: bigint, d: number) => Number(formatUnits(v, d)).toLocaleString("en-US", { maximumFractionDigits: d === 6 ? 2 : 6 });
@@ -111,6 +113,26 @@ function BatchCard({ d }: { d: (typeof DIRECTIONS)[number] }) {
   });
 
   const priv = d.asset === ASSET.USDC ? acct.balances.usdc : acct.balances.weth;
+  // A join spends one note, so what matters is the biggest note, not the total.
+  const notes = spendableNotes(acct.notes, d.asset).map((n) => (n.data.kind === "balance" ? n.data.amount : 0n));
+  const largest = notes[0] ?? 0n;
+  const fee = useRelayFee("batchJoin", d.asset);
+  const maxJoin = largest > fee ? largest - fee : 0n;
+  const tooSmall = acct.scan.phase === "done" && maxJoin < d.min;
+  let parsed: bigint | null = null;
+  try {
+    parsed = parseUnits(amount || "0", d.inDec);
+  } catch {
+    parsed = null;
+  }
+  const amountError =
+    parsed === null
+      ? "Enter a number"
+      : parsed < d.min
+        ? `The batch minimum is ${fmt(d.min, d.inDec)} ${d.inSym}`
+        : acct.scan.phase === "done" && !tooSmall && parsed > maxJoin
+          ? `Your biggest note allows up to ${fmt(maxJoin, d.inDec)} ${d.inSym}`
+          : null;
 
   const doJoin = () =>
     join.run(async (onStep) => {
@@ -174,10 +196,47 @@ function BatchCard({ d }: { d: (typeof DIRECTIONS)[number] }) {
       <PrivateGate compact>
         <div className="form" style={{ marginTop: "0.9rem" }}>
           <label>
-            Join with ({d.inSym}) · private {fmt(priv, d.inDec)} {d.inSym}
-            <input inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} />
+            Join with ({d.inSym})
+            <span className="input-row">
+              <input inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} disabled={tooSmall} />
+              {acct.scan.phase === "done" && maxJoin >= d.min && (
+                <button type="button" className="btn ghost" onClick={() => setAmount(formatUnits(maxJoin, d.inDec))}>
+                  Max
+                </button>
+              )}
+            </span>
           </label>
-          <button className="btn primary" onClick={() => void doJoin()} disabled={join.state.busy}>
+          <div className="note-facts">
+            <span>
+              Private total <b>{fmt(priv, d.inDec)}</b>
+            </span>
+            <span>
+              Biggest note <b>{fmt(largest, d.inDec)}</b>
+            </span>
+            <span>
+              Relayer fee <b>{fmt(fee, d.inDec)}</b>
+            </span>
+          </div>
+          {tooSmall ? (
+            <div className="callout">
+              <p>
+                <b>None of your {d.inSym} notes is big enough to join.</b> A private action spends one note, and a join
+                needs at least {fmt(d.min, d.inDec)} {d.inSym} plus the {fmt(fee, d.inDec)} {d.inSym} relayer fee.
+                {notes.length > 1 && (
+                  <>
+                    {" "}
+                    Your notes: {notes.map((n) => fmt(n, d.inDec)).join(", ")} {d.inSym}.
+                  </>
+                )}
+              </p>
+              <Link className="btn" href="/deposit">
+                Deposit {fmt(d.min + fee, d.inDec)} {d.inSym} or more
+              </Link>
+            </div>
+          ) : (
+            amountError && <p className="field-error">{amountError}</p>
+          )}
+          <button className="btn primary" onClick={() => void doJoin()} disabled={join.state.busy || tooSmall || !!amountError}>
             {join.state.busy ? "Working…" : `Join privately`}
           </button>
           <ActionStatus state={join.state} />

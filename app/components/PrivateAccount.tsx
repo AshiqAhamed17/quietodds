@@ -82,6 +82,7 @@ export function PrivateAccountProvider({ children }: { children: React.ReactNode
   const reserved = useRef(0);
   // The last scan, so a sync only reads blocks since then.
   const cache = useRef<{ state: PoolState; owned: OwnedNote[] } | null>(null);
+  const lastError = useRef<string | null>(null);
 
   // A different wallet is a different private account.
   useEffect(() => {
@@ -117,7 +118,8 @@ export function PrivateAccountProvider({ children }: { children: React.ReactNode
           const mine = owned.filter((n) => !n.spent).length;
           setScan({ phase: "done", progress: 1, detail: `${mine} unspent note${mine === 1 ? "" : "s"} · synced to block ${toBlock}` });
           return { notes: owned, tree: t };
-        } catch {
+        } catch (e) {
+          lastError.current = e instanceof Error ? e.message : String(e);
           // fall through to a full scan
         }
       }
@@ -144,6 +146,7 @@ export function PrivateAccountProvider({ children }: { children: React.ReactNode
         setScan({ phase: "done", progress: 1, detail: `${mine} unspent note${mine === 1 ? "" : "s"} found in ${state.leaves.length} leaves` });
         return { notes: owned, tree: t };
       } catch (e) {
+        lastError.current = e instanceof Error ? e.message : String(e);
         if (live()) setScan({ phase: "error", progress: 0, detail: "Scan failed", error: e instanceof Error ? e.message : String(e) });
         return null;
       }
@@ -196,9 +199,15 @@ export function PrivateAccountProvider({ children }: { children: React.ReactNode
 
   const sync = useCallback(async () => {
     if (!keys) throw new Error("Unlock your private account first");
-    const fresh = await runScan(keys, true);
-    if (!fresh) throw new Error("Couldn't read the pool. Try again.");
-    return fresh;
+    // A scan started elsewhere (e.g. the post-action rescan) can supersede this
+    // one; that's not a failure, so try again before giving up.
+    for (let attempt = 0; attempt < 3; attempt++) {
+      lastError.current = null;
+      const fresh = await runScan(keys, true);
+      if (fresh) return fresh;
+      if (lastError.current) break;
+    }
+    throw new Error(`Couldn't read the pool${lastError.current ? `: ${lastError.current.slice(0, 200)}` : ""}. Try again.`);
   }, [keys, runScan]);
 
   const reserveIndices = useCallback((current: readonly OwnedNote[], count: number) => {

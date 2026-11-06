@@ -51,14 +51,11 @@ export function setAnonEnabled(on: boolean) {
   } catch {
     // private mode: the choice lasts for this tab only
   }
-  if (!on) {
-    worker?.close();
-    worker = null;
-    starting = null;
-    set("off");
-  } else {
-    void start();
-  }
+  worker?.close();
+  worker = null;
+  starting = null;
+  if (!on) set("off");
+  else void start();
 }
 
 /// Used once, only to read the public specifier contract; not anonymized.
@@ -104,5 +101,16 @@ export const anonFetch: typeof fetch = async (input, init) => {
   if (!worker && !(await start())) return fetch(input, init);
   calls++;
   listeners.forEach((l) => l());
-  return worker!.fetch(input, init);
+  try {
+    return await worker!.fetch(input, init);
+  } catch (e) {
+    // The mixnet dropped this request. Keep the app working on the direct RPC
+    // and say so on the badge; clicking it retries Anon-RPC.
+    console.warn("Anon-RPC request failed, switching to direct reads:", e);
+    worker?.close();
+    worker = null;
+    starting = Promise.resolve(false);
+    set("failed");
+    return fetch(input, init);
+  }
 };

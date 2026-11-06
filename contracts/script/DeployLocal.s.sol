@@ -8,6 +8,7 @@ import {RedeemVerifier} from "../src/verifiers/RedeemVerifier.sol";
 import {IVerifier} from "../src/interfaces/IVerifier.sol";
 import {Markets} from "../src/Markets.sol";
 import {ShieldedPool} from "../src/ShieldedPool.sol";
+import {BatchSwapper} from "../src/BatchSwapper.sol";
 import {TestToken} from "../test/ShieldedPool.t.sol";
 
 /// A throwaway QuietOdds on a local anvil, for relayer and script tests.
@@ -27,6 +28,7 @@ contract DeployLocal is Script {
             IVerifier(address(new SpendVerifier())),
             IVerifier(address(new RedeemVerifier())),
             markets,
+            BatchSwapper(payable(address(0))),
             IERC20(address(usdc)),
             IERC20(address(weth))
         );

@@ -14,13 +14,26 @@
 //   -- alternative branch: market 1 cancelled after leaf 5 --
 //           Arjun redeems his position 1:1 as a refund       (redeem_arjun_refund)
 //
+// The batch story (`node gen-fixtures.mjs batch`) starts from a fresh pool whose
+// BatchSwapper opened batch 1 (USDC->WETH) and batch 2 (WETH->USDC):
+//
+//   leaf 0  Priya deposits 100 USDC
+//   leaf 1  Priya joins batch 1 with 50  -> change 49.5        (join_priya)
+//   leaf 2                                -> ticket 50
+//   leaf 3  Rahul deposits 100 USDC
+//   leaf 4  Rahul joins batch 1 with 30  -> change 69.5        (join_rahul)
+//   leaf 5                                -> ticket 30
+//   leaf 6  Arjun deposits 0.02 WETH
+//   leaf 7  Arjun joins batch 2 with 0.02, no fee -> change 0  (join_arjun_weth)
+//   leaf 8                                -> ticket 0.02
+//
 // Output: contracts/test/fixtures/<name>.json  { proof, publicInputs, ctx }
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { merklePath } from "./lib/merkle.mjs";
 import {
-  ACTION, ASSET, TAG_POSITION, balanceLeaf, nullifierHash, positionLeaf, precommitment,
+  ACTION, ASSET, TAG_POSITION, balanceLeaf, nullifierHash, positionLeaf, precommitment, ticketLeaf,
 } from "./lib/notes.mjs";
 import { prove } from "./lib/prove.mjs";
 
@@ -41,7 +54,7 @@ function save(name, result, ctx) {
 
 const note = (nullifier, secret) => ({ nullifier, secret, pc: precommitment(nullifier, secret) });
 
-function spendProof(name, leaves, { index, amount, owner, change, changeNote, publicAmount, action, p1, p2, outPc, fee, recipient }) {
+function spendProof(name, leaves, { asset = ASSET.USDC, index, amount, owner, change, changeNote, publicAmount, action, p1, p2, outPc, fee, recipient }) {
   const path = merklePath(leaves, index);
   const witness = {
     amount, nullifier: owner.nullifier, secret: owner.secret,
@@ -49,8 +62,8 @@ function spendProof(name, leaves, { index, amount, owner, change, changeNote, pu
     change, change_precommitment: changeNote.pc,
     root: path.root,
     nullifier_hash: nullifierHash(owner.nullifier),
-    asset: ASSET.USDC,
-    change_commitment: balanceLeaf(ASSET.USDC, change, changeNote.pc),
+    asset,
+    change_commitment: balanceLeaf(asset, change, changeNote.pc),
     public_amount: publicAmount,
     action_type: action, action_param1: p1, action_param2: p2,
     out_precommitment: outPc,
@@ -84,6 +97,7 @@ function redeemProof(name, leaves, { index, stake, side, owner, num, den, anySid
   return outCommitment;
 }
 
+function coreStory() {
 // Notes (nullifier, secret). In the app these come from the user's spending key.
 const priyaDeposit = note(101n, 202n);
 const priyaChange = note(111n, 222n);
@@ -148,3 +162,56 @@ writeFileSync(join(OUT, "story.json"), JSON.stringify({
   leaves: leaves.map(hex),
 }, null, 2) + "\n");
 console.log("wrote story.json");
+}
+
+function batchStory() {
+  const BATCH_USDC = 1n; // USDC -> WETH
+  const BATCH_WETH = 2n; // WETH -> USDC
+  const priya = note(501n, 602n), priyaChange = note(511n, 612n), priyaTicket = note(521n, 622n);
+  const rahul = note(701n, 802n), rahulChange = note(711n, 812n), rahulTicket = note(721n, 822n);
+  const arjun = note(901n, 1002n), arjunChange = note(911n, 1012n), arjunTicket = note(921n, 1022n);
+  const WETH = 2n * 10n ** 16n; // 0.02
+  const leaves = [];
+
+  leaves.push(balanceLeaf(ASSET.USDC, USDC(100), priya.pc));
+  leaves.push(spendProof("join_priya", leaves, {
+    index: 0, amount: USDC(100), owner: priya, change: USDC(49.5), changeNote: priyaChange,
+    publicAmount: USDC(50), action: ACTION.BATCH_JOIN, p1: BATCH_USDC, p2: 0n, outPc: priyaTicket.pc,
+    fee: USDC(0.5), recipient: 0n,
+  }));
+  leaves.push(ticketLeaf(BATCH_USDC, USDC(50), priyaTicket.pc));
+
+  leaves.push(balanceLeaf(ASSET.USDC, USDC(100), rahul.pc));
+  leaves.push(spendProof("join_rahul", leaves, {
+    index: 3, amount: USDC(100), owner: rahul, change: USDC(69.5), changeNote: rahulChange,
+    publicAmount: USDC(30), action: ACTION.BATCH_JOIN, p1: BATCH_USDC, p2: 0n, outPc: rahulTicket.pc,
+    fee: USDC(0.5), recipient: 0n,
+  }));
+  leaves.push(ticketLeaf(BATCH_USDC, USDC(30), rahulTicket.pc));
+
+  leaves.push(balanceLeaf(ASSET.WETH, WETH, arjun.pc));
+  leaves.push(spendProof("join_arjun_weth", leaves, {
+    asset: ASSET.WETH, index: 6, amount: WETH, owner: arjun, change: 0n, changeNote: arjunChange,
+    publicAmount: WETH, action: ACTION.BATCH_JOIN, p1: BATCH_WETH, p2: 0n, outPc: arjunTicket.pc,
+    fee: 0n, recipient: 0n,
+  }));
+  leaves.push(ticketLeaf(BATCH_WETH, WETH, arjunTicket.pc));
+
+  writeFileSync(join(OUT, "batch_story.json"), JSON.stringify({
+    priyaDepositPrecommitment: hex(priya.pc),
+    rahulDepositPrecommitment: hex(rahul.pc),
+    arjunDepositPrecommitment: hex(arjun.pc),
+    ticketSecrets: {
+      priya: { nullifier: hex(priyaTicket.nullifier), secret: hex(priyaTicket.secret) },
+      rahul: { nullifier: hex(rahulTicket.nullifier), secret: hex(rahulTicket.secret) },
+      arjun: { nullifier: hex(arjunTicket.nullifier), secret: hex(arjunTicket.secret) },
+    },
+    leaves: leaves.map(hex),
+  }, null, 2) + "\n");
+  console.log("wrote batch_story.json");
+}
+
+const story = process.argv[2] ?? "core";
+if (story === "core") coreStory();
+else if (story === "batch") batchStory();
+else throw new Error(`unknown story ${story}`);

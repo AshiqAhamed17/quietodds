@@ -16,6 +16,7 @@ import {Currency} from "@uniswap/v4-core/src/types/Currency.sol";
 import {ModifyLiquidityParams} from "@uniswap/v4-core/src/types/PoolOperation.sol";
 import {PoseidonT5} from "poseidon-solidity/PoseidonT5.sol";
 import {ShieldedPool} from "../src/ShieldedPool.sol";
+import {BatchSwapper} from "../src/BatchSwapper.sol";
 import {Markets} from "../src/Markets.sol";
 import {IVerifier} from "../src/interfaces/IVerifier.sol";
 import {QuietOddsHook} from "../src/QuietOddsHook.sol";
@@ -53,6 +54,7 @@ contract QuietOddsHookTest is Deployers {
                 IVerifier(address(0)),
                 IVerifier(address(0)),
                 markets,
+                BatchSwapper(payable(address(0))),
                 IERC20(Currency.unwrap(usdc_)),
                 IERC20(Currency.unwrap(other_))
             );

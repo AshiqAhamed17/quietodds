@@ -5,6 +5,7 @@ import {Test} from "forge-std/Test.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {ShieldedPool} from "../src/ShieldedPool.sol";
+import {BatchSwapper} from "../src/BatchSwapper.sol";
 import {Markets} from "../src/Markets.sol";
 import {IVerifier} from "../src/interfaces/IVerifier.sol";
 import {SpendVerifier} from "../src/verifiers/SpendVerifier.sol";
@@ -49,6 +50,7 @@ contract ShieldedPoolTest is Test {
             IVerifier(address(new SpendVerifier())),
             IVerifier(address(new RedeemVerifier())),
             markets,
+            BatchSwapper(payable(address(0))),
             IERC20(address(usdc)),
             IERC20(address(weth))
         );

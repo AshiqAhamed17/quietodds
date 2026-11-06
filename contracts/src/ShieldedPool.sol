@@ -9,6 +9,7 @@ import {PoseidonT6} from "poseidon-solidity/PoseidonT6.sol";
 import {PoseidonMerkleTree} from "./PoseidonMerkleTree.sol";
 import {IVerifier} from "./interfaces/IVerifier.sol";
 import {Markets} from "./Markets.sol";
+import {BatchSwapper} from "./BatchSwapper.sol";
 
 /// @title ShieldedPool
 /// @notice The private balance behind QuietOdds. Users deposit once, then bet,
@@ -18,6 +19,7 @@ import {Markets} from "./Markets.sol";
 ///         Every holding is a leaf in one Poseidon tree (see circuits/lib):
 ///           balance  = H(1, asset, amount, precommitment)
 ///           position = H(2, market, side, stake, precommitment)
+///           ticket   = H(3, batch, amountIn, precommitment)
 ///         The contract builds every leaf whose amount is public itself, so a
 ///         client can never mint value; leaves with hidden amounts (change,
 ///         payouts) are proven well-formed by the circuits.
@@ -69,6 +71,7 @@ contract ShieldedPool is PoseidonMerkleTree, ReentrancyGuard {
     IVerifier public immutable spendVerifier;
     IVerifier public immutable redeemVerifier;
     Markets public immutable markets;
+    BatchSwapper public immutable batches;
 
     mapping(uint256 assetId => IERC20) public assets;
     mapping(uint256 nullifierHash => bool) public nullified;
@@ -88,11 +91,20 @@ contract ShieldedPool is PoseidonMerkleTree, ReentrancyGuard {
     error BetsAreUsdcOnly();
     error ZeroRecipient();
     error BadKind();
+    error NotBatches();
 
-    constructor(IVerifier spendVerifier_, IVerifier redeemVerifier_, Markets markets_, IERC20 usdc, IERC20 weth) {
+    constructor(
+        IVerifier spendVerifier_,
+        IVerifier redeemVerifier_,
+        Markets markets_,
+        BatchSwapper batches_,
+        IERC20 usdc,
+        IERC20 weth
+    ) {
         spendVerifier = spendVerifier_;
         redeemVerifier = redeemVerifier_;
         markets = markets_;
+        batches = batches_;
         assets[ASSET_USDC] = usdc;
         assets[ASSET_WETH] = weth;
     }
@@ -123,7 +135,7 @@ contract ShieldedPool is PoseidonMerkleTree, ReentrancyGuard {
     ///         tree and `publicAmount` is routed by the action. Usually sent by
     ///         a relayer, so the user's wallet never appears.
     /// @param changeCiphertext Backup of the change note for the owner.
-    /// @param outCiphertext Backup of the action's output note (position), if any.
+    /// @param outCiphertext Backup of the action's output note (position or ticket), if any.
     function spend(
         SpendArgs calldata a,
         bytes calldata proof,
@@ -165,6 +177,11 @@ contract ShieldedPool is PoseidonMerkleTree, ReentrancyGuard {
                 PoseidonT6.hash([TAG_POSITION, a.actionParam1, a.actionParam2, a.publicAmount, a.outPrecommitment]),
                 outCiphertext
             );
+        } else if (a.actionType == ACTION_BATCH_JOIN) {
+            // BatchSwapper checks the batch is open and takes this asset.
+            if (a.outPrecommitment >= SNARK_FIELD) revert NotInField();
+            batches.join(a.actionParam1, a.asset, a.publicAmount);
+            _insert(PoseidonT5.hash([TAG_TICKET, a.actionParam1, a.publicAmount, a.outPrecommitment]), outCiphertext);
         } else {
             revert UnknownAction();
         }
@@ -215,6 +232,15 @@ contract ShieldedPool is PoseidonMerkleTree, ReentrancyGuard {
         _insert(a.outCommitment, outCiphertext);
         if (a.fee > 0) _token(assetOut).safeTransfer(msg.sender, a.fee);
         emit Redeem(a.nullifierHash, a.kind, a.id);
+    }
+
+    // --- batch swaps ---------------------------------------------------------
+
+    /// @notice Hands a batch's pooled input to the BatchSwapper for its one
+    ///         swap. The output comes back here before the call returns.
+    function releaseToBatches(uint256 asset, uint256 amount) external nonReentrant {
+        if (msg.sender != address(batches)) revert NotBatches();
+        _token(asset).safeTransfer(msg.sender, amount);
     }
 
     // --- internals -----------------------------------------------------------

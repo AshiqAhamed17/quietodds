@@ -10,6 +10,7 @@ import { usePriceHistory } from "@/hooks/usePriceHistory";
 import { PriceChart } from "./PriceChart";
 import { ChartPanel } from "./ChartPanel";
 import { Countdown } from "./Countdown";
+import { usePrivateAccount } from "./PrivateAccount";
 
 type Filter = "all" | "open" | "closed" | "resolved";
 type Sort = "soon" | "pool" | "newest";
@@ -251,6 +252,15 @@ function MarketCard({ m, index }: { m: MarketView; index: number }) {
   const target = Number(m.threshold) / 1e8;
   const { points } = usePriceHistory(isFeed ? m.priceFeed : ZERO);
   const settled = m.status === Status.Resolved || m.status === Status.Cancelled;
+  // Only say "Claim" when this private account actually holds a bet here.
+  const { notes } = usePrivateAccount();
+  const hasBet = notes.some(
+    (n) =>
+      !n.spent &&
+      n.data.kind === "position" &&
+      n.data.market === m.id &&
+      (m.status === Status.Cancelled || Number(n.data.side) === m.winningSide),
+  );
 
   return (
     <Link href={`/markets/${m.id.toString()}`} className="card-link">
@@ -293,7 +303,7 @@ function MarketCard({ m, index }: { m: MarketView; index: number }) {
           {settled ? (
             <div className="row">
               <span>Result</span>
-              <b className="tag-yes">{m.status === Status.Cancelled ? "Refunded" : m.outcomes[m.winningSide]}</b>
+              <b className="tag-yes">{m.status === Status.Cancelled ? (m.pot === 0n ? "No bets placed" : "Refunded") : m.outcomes[m.winningSide]}</b>
             </div>
           ) : (
             <div className="row">
@@ -305,7 +315,7 @@ function MarketCard({ m, index }: { m: MarketView; index: number }) {
         <OddsBar m={m} />
 
         <div className="card-foot">
-          <span className="card-cta mono">{isOpenNow(m) ? "Bet privately" : settled ? "Claim / view" : "View market"} →</span>
+          <span className="card-cta mono">{isOpenNow(m) ? "Bet privately" : settled && hasBet ? (m.status === Status.Cancelled ? "Claim refund" : "Claim winnings") : settled ? "View result" : "View market"} →</span>
         </div>
       </motion.article>
     </Link>

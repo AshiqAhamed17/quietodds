@@ -6,6 +6,7 @@ import type { MarketView } from "@/hooks/useMarkets";
 /// (betting over, waiting for the CRE resolver).
 export function statusLabel(m: MarketView, nowSec = Date.now() / 1000): string {
   if (m.status === Status.Open) return Number(m.closeTime) <= nowSec ? "Closed" : "Open";
+  if (m.status === Status.Cancelled && m.pot === 0n) return "No bets";
   return ["", "Open", "Resolved", "Cancelled"][m.status] ?? "Unknown";
 }
 export function statusClass(m: MarketView, nowSec = Date.now() / 1000): string {

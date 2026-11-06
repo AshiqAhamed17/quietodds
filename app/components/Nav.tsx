@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ConnectButton } from "./ConnectButton";
+import { AnonBadge } from "./AnonBadge";
 import { useEthPrice } from "@/hooks/useEthPrice";
 import { priceUsd } from "@/lib/format";
 
@@ -50,6 +51,7 @@ export function Nav() {
         </nav>
 
         <div className="nav-right">
+          <AnonBadge />
           <PriceTicker />
           <a href="https://github.com/AshiqAhamed17/quietodds" target="_blank" rel="noreferrer" className="nav-gh" title="View source on GitHub" aria-label="GitHub">
             <svg viewBox="0 0 16 16" width="18" height="18" fill="currentColor" aria-hidden>

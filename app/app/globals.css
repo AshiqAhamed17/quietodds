@@ -3178,3 +3178,28 @@ footer {
     display: none;
   }
 }
+
+/* --- Anon-RPC badge --- */
+.anon-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.35rem 0.7rem;
+  border-radius: 999px;
+  border: 1px solid var(--line, rgba(255, 255, 255, 0.12));
+  background: transparent;
+  color: var(--fg-2, #c9c9d1);
+  font-size: 0.72rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.anon-badge:hover { color: var(--fg, #fff); }
+.anon-dot { width: 7px; height: 7px; border-radius: 50%; background: #777; }
+.anon-badge.on { border-color: rgba(143, 230, 203, 0.45); color: var(--yes, #8fe6cb); }
+.anon-badge.on .anon-dot { background: var(--yes, #8fe6cb); box-shadow: 0 0 8px var(--yes, #8fe6cb); }
+.anon-badge.connecting .anon-dot { background: #ffce9f; animation: anon-pulse 1s ease-in-out infinite; }
+.anon-badge.failed { border-color: rgba(255, 159, 174, 0.4); }
+.anon-badge.failed .anon-dot { background: var(--no, #ff9fae); }
+.anon-count { opacity: 0.65; font-size: 0.66rem; }
+@keyframes anon-pulse { 50% { opacity: 0.3; } }
+@media (max-width: 900px) { .anon-badge { font-size: 0; gap: 0; padding: 0.45rem; } }

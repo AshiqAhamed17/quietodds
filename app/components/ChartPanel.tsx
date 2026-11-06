@@ -33,8 +33,14 @@ export function ChartPanel({
           <span aria-hidden>〜</span> Line
         </button>
         {product && (
-          <button role="tab" aria-selected={mode === "candles"} className={mode === "candles" ? "on" : ""} onClick={() => setMode("candles")}>
-            <span aria-hidden>▮</span> Candles
+          <button
+            role="tab"
+            aria-selected={mode === "candles"}
+            className={mode === "candles" ? "on" : ""}
+            onClick={() => setMode("candles")}
+            title="Loads OHLC candles directly from Coinbase's public API: not through Anon-RPC, so Coinbase sees your IP. The line chart is the Chainlink feed, read through Anon-RPC."
+          >
+            <span aria-hidden>▮</span> Candles · Coinbase
           </button>
         )}
       </div>

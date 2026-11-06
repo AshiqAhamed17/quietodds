@@ -3238,3 +3238,6 @@ main.page > .panel + .panel, main.page > .statrow + .panel { margin-top: 1.2rem;
 @media (max-width: 860px) { .two-col { grid-template-columns: 1fr; } }
 .redeem-row .obc-row { display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 1rem; }
 .redeem-row .obc-row .btn { padding: 0.4rem 0.8rem; font-size: 0.8rem; }
+.bet-queue { margin-top: 1.2rem; display: grid; gap: 0.5rem; }
+.bet-queue h3 { margin: 0; font-size: 1rem; }
+.bet-queue .btn { padding: 0.15rem 0.5rem; font-size: 0.7rem; }

@@ -29,3 +29,6 @@ learn/
 
 # Lean build artifacts (Mathlib cache etc.)
 lean/.lake/
+
+# Vercel link for the app (root directory: app)
+/.vercel/

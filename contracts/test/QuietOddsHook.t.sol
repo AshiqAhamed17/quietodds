@@ -10,6 +10,7 @@ import {IPoolManager} from "@uniswap/v4-core/src/interfaces/IPoolManager.sol";
 import {Hooks} from "@uniswap/v4-core/src/libraries/Hooks.sol";
 import {CustomRevert} from "@uniswap/v4-core/src/libraries/CustomRevert.sol";
 import {PoolKey} from "@uniswap/v4-core/src/types/PoolKey.sol";
+import {StateLibrary} from "@uniswap/v4-core/src/libraries/StateLibrary.sol";
 import {Currency} from "@uniswap/v4-core/src/types/Currency.sol";
 import {ModifyLiquidityParams} from "@uniswap/v4-core/src/types/PoolOperation.sol";
 import {PoseidonT5} from "poseidon-solidity/PoseidonT5.sol";
@@ -21,6 +22,7 @@ import {QuietOddsHook} from "../src/QuietOddsHook.sol";
 /// Shield-on-swap across every swap shape. Each fuzz run is checked against a
 /// control: the same swap without the hook's shield, from the same state.
 contract QuietOddsHookTest is Deployers {
+    using StateLibrary for IPoolManager;
     uint160 constant FLAGS = uint160(
         Hooks.BEFORE_SWAP_FLAG | Hooks.AFTER_SWAP_FLAG | Hooks.BEFORE_SWAP_RETURNS_DELTA_FLAG
             | Hooks.AFTER_SWAP_RETURNS_DELTA_FLAG
@@ -205,6 +207,70 @@ contract QuietOddsHookTest is Deployers {
 
     function test_hookAddressHasExactlyItsFlags() public view {
         Hooks.validateHookPermissions(IHooks(address(setups[0].hook)), setups[0].hook.getHookPermissions());
+    }
+
+    // --- anti-sandwich (4.3) ---------------------------------------------------
+
+    /// Attacker's token0 profit from: buy token1 (front-run), victim buys
+    /// token1, attacker sells all its token1 back (back-run), all in one block.
+    function _sandwich(PoolKey memory k, uint256 front, uint256 victim, bool nextBlockBackRun)
+        internal
+        returns (int256 profit)
+    {
+        uint256 t1Before = currency1.balanceOf(address(this));
+        swap(k, true, -int256(front), ""); // front-run
+        uint256 got1 = currency1.balanceOf(address(this)) - t1Before;
+        swap(k, true, -int256(victim), ""); // victim (balances not counted)
+        if (nextBlockBackRun) vm.roll(block.number + 1);
+        uint256 t0Before = currency0.balanceOf(address(this));
+        swap(k, false, -int256(got1), ""); // back-run: sell everything bought
+        profit = int256(currency0.balanceOf(address(this)) - t0Before) - int256(front);
+    }
+
+    function _plainPool() internal returns (PoolKey memory k) {
+        (k,) = initPool(currency0, currency1, IHooks(address(0)), 3000, SQRT_PRICE_1_1);
+        modifyLiquidityRouter.modifyLiquidity(k, ModifyLiquidityParams(-887220, 887220, 1e24, 0), "");
+    }
+
+    function test_sandwichPaysWithoutTheHook() public {
+        assertGt(_sandwich(_plainPool(), 1e21, 1e22, false), 0);
+    }
+
+    function testFuzz_sandwichNeverPaysInOneBlock(uint256 front, uint256 victim) public {
+        front = bound(front, 1e15, 5e22);
+        victim = bound(victim, 1e15, 5e22);
+        assertLt(_sandwich(setups[0].key, front, victim, false), 0);
+    }
+
+    function test_skimGoesToLps() public {
+        PoolKey memory k = setups[0].key;
+        (uint256 g0Before,) = manager.getFeeGrowthGlobals(k.toId());
+        _sandwich(k, 1e21, 1e22, false);
+        (uint256 g0After,) = manager.getFeeGrowthGlobals(k.toId());
+        // Fees alone (0.3% of the back-run, paid in token1) don't move token0's
+        // fee growth; the skim on the back-run's token0 output does.
+        assertGt(g0After, g0Before);
+        assertEq(currency0.balanceOf(address(setups[0].hook)), 0);
+        assertEq(currency1.balanceOf(address(setups[0].hook)), 0);
+    }
+
+    function test_guardOnlyCoversOneBlock() public {
+        // The guarantee is per block: a back-run in the next block is priced normally.
+        assertGt(_sandwich(setups[0].key, 1e21, 1e22, true), 0);
+    }
+
+    function test_shieldStillExactWhenTheGuardSkims() public {
+        Setup memory s = setups[1]; // USDC is currency1, so a one-for-zero swap pays USDC in
+        swap(s.key, true, -1e22, ""); // someone moves the price earlier in the block
+        uint256 u = s.usdc.balanceOf(address(this));
+        (uint256 g0,) = manager.getFeeGrowthGlobals(s.key.toId());
+        swap(s.key, false, -1e21, _hookData(1e20)); // USDC in, exact in: 1e20 shielded
+        assertEq(u - s.usdc.balanceOf(address(this)), 1e21, "input still exact");
+        assertEq(s.usdc.balanceOf(address(s.pool)), 1e20, "shield exact");
+        (uint256 g0After,) = manager.getFeeGrowthGlobals(s.key.toId());
+        assertGt(g0After, g0, "guard skimmed the token0 output");
+        assertEq(s.usdc.balanceOf(address(s.hook)), 0);
+        assertEq(s.other.balanceOf(address(s.hook)), 0);
     }
 
     function _wrapped(QuietOddsHook hook, bytes4 callback, bytes4 err) internal pure returns (bytes memory) {

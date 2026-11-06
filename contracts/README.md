@@ -1,6 +1,6 @@
 # QuietOdds contracts
 
-Foundry project: ShieldedPool, Markets, ResolverReceiver and the Uniswap v4 hook.
+Foundry project: ShieldedPool, Markets, BatchSwapper, ResolverReceiver and the Uniswap v4 hook.
 
 ```bash
 git submodule update --init --recursive
@@ -23,3 +23,17 @@ forge script script/CreateMarkets.s.sol --rpc-url "$SEPOLIA_RPC_URL" --broadcast
 ```
 
 Addresses land in `deployments/quietodds-sepolia.json`.
+
+Then the hook, its dynamic-fee ETH/USDC pool (which also sets the BatchSwapper's pool key)
+and full-range liquidity:
+
+```bash
+forge script script/DeployHook.s.sol   --rpc-url "$SEPOLIA_RPC_URL" --broadcast --skip-simulation --slow --with-gas-price 2gwei --priority-gas-price 1000000
+forge script script/CreatePool.s.sol   --rpc-url "$SEPOLIA_RPC_URL" --broadcast --skip-simulation --slow --with-gas-price 2gwei --priority-gas-price 1000000
+USDC_LIQUIDITY=100000000 \
+forge script script/AddLiquidity.s.sol --rpc-url "$SEPOLIA_RPC_URL" --broadcast --skip-simulation --slow --with-gas-price 2gwei --priority-gas-price 1000000
+```
+
+The hook lands in `deployments/hook-sepolia.json`. The testnet pool is thin, so the batch
+slippage budget on Sepolia is raised to 5% with `BatchSwapper.setSlippage(500)` (the default
+is 1%). The first deployment (M2/M3) is archived in `deployments/v1/`.

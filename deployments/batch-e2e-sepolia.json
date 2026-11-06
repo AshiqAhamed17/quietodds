@@ -9,6 +9,103 @@
       "step": "createMarket",
       "tx": "0x73a0df8e774201dedf870dbd256c3eeba2f0de0f651633f5694d1f40f3ab6ac3",
       "gasUsed": "912463"
+    },
+    {
+      "step": "priya: approve",
+      "tx": "0x869994b673cbf1d800d2a2352523532b9c6636edd1c1da125cb3d9de64be149d",
+      "gasUsed": "137745"
+    },
+    {
+      "step": "priya: deposit 4 USDC",
+      "tx": "0x5a0bb2f6997e26864995e954295219b05ab62c071a20a4c197f96bf8d7482bab",
+      "gasUsed": "3321066"
+    },
+    {
+      "step": "rahul: approve",
+      "tx": "0x78914dac30df72c475849caa7696004fbe3e0a4d58d1030bf113aa1c63c9aeeb",
+      "gasUsed": "137745"
+    },
+    {
+      "step": "rahul: deposit 4 USDC",
+      "tx": "0x4b04b6a09348c9ee78c7ecc7219445f1a3a61d792d3e78e9546c2f18e7fb72c0",
+      "gasUsed": "1156743"
+    },
+    {
+      "step": "arjun: approve",
+      "tx": "0x1a48366c37c73481b9592b23006a5b7773ee61e78053b0a409fa29356b70f1a0",
+      "gasUsed": "137745"
+    },
+    {
+      "step": "arjun: deposit 4 USDC",
+      "tx": "0x0d7917367ec9cf4df1226d7b148163776eb868330eebb3fa6b4b6a1957bb7e8a",
+      "gasUsed": "1156719"
+    },
+    {
+      "step": "priya: private bet 1 USDC on side 0 (relayed)",
+      "tx": "0x6945c16a0adb39e6e56be730c774b8322e265d4a1b5e32879562cae31df49f2c",
+      "gasUsed": "6022248"
+    },
+    {
+      "step": "priya: private join of batch #1 with 1.2 USDC (relayed)",
+      "tx": "0xd12e9690efd9847545098ea1d6976557464d240e4022dee1aaa93efedfa45e56",
+      "gasUsed": "5746422"
+    },
+    {
+      "step": "rahul: private bet 1 USDC on side 2 (relayed)",
+      "tx": "0x8618f9beec71990c2f13926acb065c284a25bed1eaf34dad0a9ca4f83131d27f",
+      "gasUsed": "5924151"
+    },
+    {
+      "step": "rahul: private join of batch #1 with 1 USDC (relayed)",
+      "tx": "0xf8b1fe608871e839ef089df48591ea7f7473144d1b5415ff6edfba7f072e3c8c",
+      "gasUsed": "5746154"
+    },
+    {
+      "step": "arjun: private bet 1 USDC on side 1 (relayed)",
+      "tx": "0xdee508bcde25762d4e1678de49df38f273d31254f1b16dfba7ba225687c0e624",
+      "gasUsed": "5914022"
+    },
+    {
+      "step": "arjun: private join of batch #1 with 1 USDC (relayed)",
+      "tx": "0x2bb17e5b437db15c182ef2374ff9f234dd8ff40799dfdcc3d95c42ffdd9d0ad8",
+      "gasUsed": "5735786"
+    },
+    {
+      "step": "CRE report -> ResolverReceiver (resolve, executeBatch, donateFees)",
+      "tx": "0xc74f806af868206ff80adb6b14515d8b70506473753788e6bf15b389bbb080e7",
+      "gasUsed": "1456855"
+    },
+    {
+      "step": "priya: redeem ticket for 0.000522324957035164 WETH (relayed)",
+      "tx": "0xe378c3921459905bf6e7a98005706b2d0c44a333a20a5be11687dd5eb7cb34d0",
+      "gasUsed": "4943812"
+    },
+    {
+      "step": "rahul: redeem ticket for 0.000435270797529304 WETH (relayed)",
+      "tx": "0x5b14af719bc1c7707f86eb0cff9d9d1a7c4ad07af868045cf22ca7a959f93bdb",
+      "gasUsed": "4876177"
+    },
+    {
+      "step": "arjun: redeem ticket for 0.000435270797529304 WETH (relayed)",
+      "tx": "0xb964c72fe2910d1d5df02951926b91ab425f96c6215cd3402d91aca544879d0c",
+      "gasUsed": "4866106"
+    },
+    {
+      "step": "priya: withdraw 0.000482324957035164 WETH to fresh 0x5c6926b24f016518dC510f203a3455220A5fB317 (relayed)",
+      "tx": "0x24fbf8602c04d2d13dd9307fec64814ae1dbefa38ea5000ea4bd49156270f566",
+      "gasUsed": "4975307"
     }
-  ]
+  ],
+  "marketId": "1",
+  "batchId": "1",
+  "closeTime": "1793949900",
+  "batchExecuted": {
+    "totalIn": "3200000",
+    "amountOut": "1392866552093773",
+    "minOut": "1369547982189754"
+  },
+  "feesDonated": "30000",
+  "freshAddress": "0x5c6926b24f016518dC510f203a3455220A5fB317",
+  "freshWeth": "482324957035164",
+  "completedAt": "2026-11-06T07:28:51.737Z"
 }

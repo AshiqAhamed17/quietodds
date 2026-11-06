@@ -8,14 +8,14 @@ import { priceUsd } from "@/lib/format";
 const LABEL: Record<AnonStatus, string> = {
   on: "Reads via Anon-RPC",
   connecting: "Connecting to Anon-RPC…",
-  failed: "Anon-RPC down · direct reads",
+  failed: "Anon-RPC reconnecting · direct reads",
   off: "Direct reads",
 };
 
 const TITLE: Record<AnonStatus, string> = {
   on: "Every read (odds, pool state, your note scan) goes through the EF's Anon-RPC mixnet, so the RPC node can't link your IP to what you look at. Click to switch to faster direct reads.",
   connecting: "Bootstrapping the Anon-RPC worker (~10s). Reads wait for it.",
-  failed: "Anon-RPC couldn't start, so reads go straight to the RPC node. Click to retry.",
+  failed: "The mixnet missed several reads in a row, so reads go straight to the RPC node while it reconnects on its own. Click to retry now.",
   off: "Reads go straight to the RPC node, which can see your IP. Click to anonymize them.",
 };
 
@@ -45,7 +45,7 @@ export function AnonBadge() {
 const SHORT: Record<AnonStatus, string> = {
   on: "Anon-RPC",
   connecting: "Anon-RPC…",
-  failed: "Direct reads",
+  failed: "Reconnecting",
   off: "Direct reads",
 };
 

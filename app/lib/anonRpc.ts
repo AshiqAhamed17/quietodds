@@ -54,6 +54,10 @@ export function setAnonEnabled(on: boolean) {
   worker?.close();
   worker = null;
   starting = null;
+  strikes = 0;
+  retryDelay = 15_000;
+  if (retryTimer) clearTimeout(retryTimer);
+  retryTimer = null;
   if (!on) set("off");
   else void start();
 }
@@ -72,6 +76,28 @@ const bootstrap = {
   },
 };
 
+/// The mixnet drops the odd request; one miss shouldn't switch the whole tab to
+/// direct reads. A failed request falls back on its own, and only a run of
+/// misses restarts the worker, which then retries by itself with a backoff.
+const REQUEST_TIMEOUT_MS = 30_000;
+const MAX_STRIKES = 3;
+let strikes = 0;
+let retryDelay = 15_000;
+let retryTimer: ReturnType<typeof setTimeout> | null = null;
+/// True once a worker has run in this tab: later restarts don't block reads.
+let everReady = false;
+
+function scheduleRetry() {
+  if (retryTimer || !enabled) return;
+  retryTimer = setTimeout(() => {
+    retryTimer = null;
+    if (!enabled || worker) return;
+    starting = null;
+    void start();
+  }, retryDelay);
+  retryDelay = Math.min(retryDelay * 2, 120_000);
+}
+
 function start(): Promise<boolean> {
   if (starting) return starting;
   set("connecting");
@@ -83,34 +109,61 @@ function start(): Promise<boolean> {
         w.ready,
         new Promise((_, reject) => setTimeout(() => reject(new Error("Anon-RPC bootstrap timed out")), READY_TIMEOUT_MS)),
       ]);
+      if (!enabled) {
+        (w as unknown as { close(): void }).close();
+        return false;
+      }
       worker = w as unknown as { fetch: typeof fetch; close(): void };
+      strikes = 0;
+      retryDelay = 15_000;
+      everReady = true;
       set("on");
       return true;
     } catch (e) {
-      console.warn("Anon-RPC unavailable, reads use the direct RPC:", e);
+      console.warn("Anon-RPC unavailable, reads use the direct RPC for now:", e);
       set("failed");
+      scheduleRetry();
       return false;
     }
   })();
   return starting;
 }
 
+function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
+  return Promise.race([p, new Promise<T>((_, reject) => setTimeout(() => reject(new Error("Anon-RPC request timed out")), ms))]);
+}
+
 /// viem `fetchFn`: through the mixnet when on, direct otherwise.
 export const anonFetch: typeof fetch = async (input, init) => {
   if (typeof window === "undefined" || !enabled) return fetch(input, init);
-  if (!worker && !(await start())) return fetch(input, init);
+  if (!worker) {
+    // First start: wait for the worker so no read leaks. A restart after a
+    // failure: read directly meanwhile (the badge says so).
+    if (everReady || status === "failed") {
+      void start();
+      return fetch(input, init);
+    }
+    if (!(await start())) return fetch(input, init);
+  }
   calls++;
   listeners.forEach((l) => l());
+  const w = worker!;
   try {
-    return await worker!.fetch(input, init);
+    const res = await withTimeout(w.fetch(input, init), REQUEST_TIMEOUT_MS);
+    strikes = 0;
+    return res;
   } catch (e) {
-    // The mixnet dropped this request. Keep the app working on the direct RPC
-    // and say so on the badge; clicking it retries Anon-RPC.
-    console.warn("Anon-RPC request failed, switching to direct reads:", e);
-    worker?.close();
-    worker = null;
-    starting = Promise.resolve(false);
-    set("failed");
+    if (init?.signal?.aborted) throw e;
+    strikes++;
+    console.warn(`Anon-RPC request failed (${strikes}/${MAX_STRIKES}), this one goes direct:`, e);
+    if (strikes >= MAX_STRIKES && worker === w) {
+      worker.close();
+      worker = null;
+      starting = null;
+      strikes = 0;
+      set("failed");
+      scheduleRetry();
+    }
     return fetch(input, init);
   }
 };

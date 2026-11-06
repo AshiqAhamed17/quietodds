@@ -14,7 +14,12 @@ export interface RelayQuote {
   chainId: number;
   gasPrice: string;
   validForSeconds: number;
-  fees: { withdraw: { usdc: string; weth: string }; bet: { usdc: string }; redeem: { usdc: string } };
+  fees: {
+    withdraw: { usdc: string; weth: string };
+    bet: { usdc: string };
+    batchJoin: { usdc: string; weth: string };
+    redeem: { usdc: string; weth: string };
+  };
 }
 
 const strings = <T extends object>(o: T) =>

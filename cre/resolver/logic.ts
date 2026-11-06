@@ -3,6 +3,8 @@
 /** ResolverReceiver action kinds. */
 export const KIND_RESOLVE = 1
 export const KIND_CANCEL = 2
+export const KIND_EXECUTE_BATCH = 3
+export const KIND_DONATE_FEES = 4
 
 /** Markets.Status / Markets.Source */
 export const STATUS_OPEN = 1
@@ -75,4 +77,17 @@ export function toAction(id: bigint, code: number, numSides: number): Action | n
 	if (code === CANCEL) return { kind: KIND_CANCEL, id, outcome: 0 }
 	if (!Number.isInteger(code) || code < 0 || code >= numSides) throw new Error(`bad outcome ${code} for market ${id}`)
 	return { kind: KIND_RESOLVE, id, outcome: code }
+}
+
+/**
+ * Upkeep after the market actions: execute every batch that is ready, then
+ * donate the markets' fees to the Uniswap LPs if any are accrued or about to
+ * be (a RESOLVE in this same report accrues its 1% before the donate runs).
+ */
+export function upkeepActions(readyBatches: bigint[], feesAccrued: bigint, marketActions: Action[]): Action[] {
+	const out: Action[] = readyBatches.map((id) => ({ kind: KIND_EXECUTE_BATCH, id, outcome: 0 }))
+	if (feesAccrued > 0n || marketActions.some((a) => a.kind === KIND_RESOLVE)) {
+		out.push({ kind: KIND_DONATE_FEES, id: 0n, outcome: 0 })
+	}
+	return out
 }

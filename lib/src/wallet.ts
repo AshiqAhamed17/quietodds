@@ -65,6 +65,9 @@ export const spendableNotes = (notes: readonly OwnedNote[], asset: bigint) =>
 export const unspentPositions = (notes: readonly OwnedNote[]) =>
   notes.filter((n) => !n.spent && n.data.kind === "position");
 
+export const unspentTickets = (notes: readonly OwnedNote[]) =>
+  notes.filter((n) => !n.spent && n.data.kind === "ticket");
+
 export function shieldedBalance(notes: readonly OwnedNote[], asset: bigint): bigint {
   let total = 0n;
   for (const n of notes) if (!n.spent && n.data.kind === "balance" && n.data.asset === asset) total += n.data.amount;

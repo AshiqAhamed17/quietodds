@@ -9,6 +9,8 @@ export interface Deployment {
   pool: Address;
   markets: Address;
   resolverReceiver: Address;
+  /** Private batch swaps and the LP fee donation. */
+  batches: Address;
   usdc: Address;
   weth: Address;
   ethUsdFeed: Address;
@@ -33,6 +35,7 @@ export const sepolia: Deployment = {
   pool: core.ShieldedPool as Address,
   markets: core.Markets as Address,
   resolverReceiver: core.ResolverReceiver as Address,
+  batches: core.BatchSwapper as Address,
   usdc: external.tokens.USDC.address as Address,
   weth: external.tokens.WETH.address as Address,
   ethUsdFeed: external.chainlinkFeeds.ETH_USD as Address,

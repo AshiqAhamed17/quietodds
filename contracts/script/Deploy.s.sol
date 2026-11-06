@@ -45,7 +45,7 @@ contract Deploy is Script {
             IERC20(USDC),
             IERC20(WETH)
         );
-        ResolverReceiver receiver = new ResolverReceiver(deployer, markets, CRE_SIM_FORWARDER);
+        ResolverReceiver receiver = new ResolverReceiver(deployer, markets, batches, CRE_SIM_FORWARDER);
         markets.setPool(address(pool));
         markets.setResolver(address(receiver));
         batches.setPool(pool); // the pool key is set after the hook (DeployHook.s.sol)

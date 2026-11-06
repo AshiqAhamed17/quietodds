@@ -5,6 +5,7 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {IReceiver} from "./interfaces/IReceiver.sol";
 import {Markets} from "./Markets.sol";
+import {BatchSwapper} from "./BatchSwapper.sol";
 
 /// @title ResolverReceiver
 /// @notice Landing pad for the QuietOdds Chainlink CRE workflow. The workflow
@@ -17,7 +18,8 @@ import {Markets} from "./Markets.sol";
 contract ResolverReceiver is IReceiver, Ownable {
     uint8 public constant KIND_RESOLVE = 1;
     uint8 public constant KIND_CANCEL = 2;
-    uint8 public constant KIND_EXECUTE_BATCH = 3; // wired up with batch swaps
+    uint8 public constant KIND_EXECUTE_BATCH = 3; // id = batch id
+    uint8 public constant KIND_DONATE_FEES = 4; // donate accrued market fees to LPs
 
     struct Action {
         uint8 kind;
@@ -26,6 +28,7 @@ contract ResolverReceiver is IReceiver, Ownable {
     }
 
     Markets public immutable markets;
+    BatchSwapper public immutable batches;
     /// KeystoneForwarder (production) or MockKeystoneForwarder (simulation).
     address public forwarder;
     /// If set, only reports from workflows owned by this address are accepted.
@@ -40,8 +43,9 @@ contract ResolverReceiver is IReceiver, Ownable {
     error UnauthorizedForwarder(address caller);
     error UnauthorizedWorkflow(address workflowOwner);
 
-    constructor(address owner_, Markets markets_, address forwarder_) Ownable(owner_) {
+    constructor(address owner_, Markets markets_, BatchSwapper batches_, address forwarder_) Ownable(owner_) {
         markets = markets_;
+        batches = batches_;
         forwarder = forwarder_;
         emit ForwarderSet(forwarder_);
     }
@@ -85,6 +89,18 @@ contract ResolverReceiver is IReceiver, Ownable {
                 emit ActionApplied(a.kind, a.id, 0);
             } catch (bytes memory reason) {
                 emit ActionFailed(a.kind, a.id, reason);
+            }
+        } else if (a.kind == KIND_EXECUTE_BATCH) {
+            try batches.executeBatch(a.id) {
+                emit ActionApplied(a.kind, a.id, 0);
+            } catch (bytes memory reason) {
+                emit ActionFailed(a.kind, a.id, reason);
+            }
+        } else if (a.kind == KIND_DONATE_FEES) {
+            try batches.donateFees() {
+                emit ActionApplied(a.kind, 0, 0);
+            } catch (bytes memory reason) {
+                emit ActionFailed(a.kind, 0, reason);
             }
         } else {
             emit ActionFailed(a.kind, a.id, "unknown kind");

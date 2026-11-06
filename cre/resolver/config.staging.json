@@ -1,9 +1,10 @@
 {
   "schedule": "0 */10 * * * *",
   "chainSelectorName": "ethereum-testnet-sepolia",
-  "markets": "0xcff79Cc227b8bE772B28d910d059Ac5fF81d3854",
-  "receiver": "0x053F4fd9b560a0C5a32B4Bd56cbe20B5300F1E51",
+  "markets": "0x42A29a66812aBDdCE241521E2E510885F3d38229",
+  "receiver": "0x5d83961b7F18EB5AeB61eFef67A84591A3d52BAC",
   "readAt": "latest",
   "maxMarketsPerRun": 4,
-  "gasLimit": "5000000"
+  "gasLimit": "5000000",
+  "batches": "0x027Fc4CE56eCBcC1dFabc1BD0a66EdEa2123d3bc"
 }

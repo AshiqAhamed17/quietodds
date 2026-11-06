@@ -2,8 +2,9 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { getAddress, type Hex } from "viem";
 import {
-  ASSET, MerkleTree, balanceLeaf, deriveNote, encryptNote, keysFromSpendingKey, positionLeaf,
-  redeemPublicInputs, scanNotes, spendPublicInputs, buildRedeem, buildSpend, type OwnedNote,
+  ASSET, ACTION, MerkleTree, balanceLeaf, deriveNote, encryptNote, keysFromSpendingKey, positionLeaf, ticketLeaf,
+  redeemPublicInputs, scanNotes, spendPublicInputs, buildRedeem, buildSpend, ticketTerms, unspentTickets,
+  type OwnedNote,
 } from "../src/index.ts";
 import { Prover } from "../src/prover.ts";
 
@@ -89,4 +90,43 @@ describe("deposit -> bet -> redeem with derived keys", () => {
       }),
     ).rejects.toThrow("amount exceeds note");
   });
+});
+
+describe("deposit -> batch join -> ticket redeem", () => {
+  const keys = keysFromSpendingKey(777n);
+  const tree = new MerkleTree([9n]);
+
+  it("joins a batch and redeems the ticket for its share of the output", async () => {
+    const d = deriveNote(keys, 0);
+    const amount = 10_000_000n;
+    const i0 = tree.insert(balanceLeaf(ASSET.USDC, amount, d.precommitment));
+    const ct0 = await encryptNote(keys.viewingKey, { kind: "balance", index: 0, asset: ASSET.USDC, amount });
+    const [deposit] = await scanNotes(keys, [{ index: i0, leaf: tree.leaves[i0], ciphertext: ct0 }], () => false);
+
+    const join = await buildSpend({
+      keys, note: deposit, tree, publicAmount: 4_000_000n, fee: 50_000n, relayer: RELAYER,
+      action: { type: "batchJoin", batch: 7n }, changeIndex: 1,
+    });
+    expect(join.args.actionType).toBe(ACTION.BATCH_JOIN);
+    expect(join.args.actionParam1).toBe(7n);
+    const sp = await prover.prove("spend", join.inputs);
+    expect(sp.publicInputs).toEqual(spendPublicInputs(join.args));
+    expect(await prover.verify("spend", sp.proof, sp.publicInputs)).toBe(true);
+
+    // The pool inserts the change, then the ticket it builds; our scan finds the ticket.
+    tree.insert(join.args.changeCommitment);
+    const ti = tree.insert(ticketLeaf(7n, 4_000_000n, join.args.outPrecommitment));
+    const notes = await scanNotes(keys, [{ index: ti, leaf: tree.leaves[ti], ciphertext: join.outCiphertext }], () => false);
+    const [ticket] = unspentTickets(notes);
+    expect(ticket.data).toMatchObject({ kind: "ticket", batch: 7n, amountIn: 4_000_000n });
+
+    // Batch 7 swapped 12 USDC in for 0.0053 WETH out: 4/12 of it, in WETH.
+    const terms = ticketTerms(5_300_000_000_000_000n, 12_000_000n, ASSET.WETH);
+    const redeem = await buildRedeem({ keys, note: ticket, tree, terms, fee: 10n ** 13n, relayer: RELAYER, outIndex: 3 });
+    expect(redeem.payout).toBe((4_000_000n * 5_300_000_000_000_000n) / 12_000_000n);
+    expect(redeem.created[0]).toMatchObject({ kind: "balance", asset: ASSET.WETH, amount: redeem.payout - 10n ** 13n });
+    const rp = await prover.prove("redeem", redeem.inputs);
+    expect(rp.publicInputs).toEqual(redeemPublicInputs(redeem.args, terms));
+    expect(await prover.verify("redeem", rp.proof, rp.publicInputs)).toBe(true);
+  }, 120_000);
 });

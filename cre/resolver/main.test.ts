@@ -1,6 +1,18 @@
 import { describe, expect, test } from 'bun:test'
 import { decodeAbiParameters, encodeAbiParameters, parseAbiParameters } from 'viem'
-import { CANCEL, KIND_CANCEL, KIND_RESOLVE, PENDING, espnUrl, priceOutcome, sportsOutcome, toAction } from './logic'
+import {
+	CANCEL,
+	KIND_CANCEL,
+	KIND_DONATE_FEES,
+	KIND_EXECUTE_BATCH,
+	KIND_RESOLVE,
+	PENDING,
+	espnUrl,
+	priceOutcome,
+	sportsOutcome,
+	toAction,
+	upkeepActions,
+} from './logic'
 import { initWorkflow } from './main'
 
 const event = (name: string, completed: boolean, home: string, away: string) => ({
@@ -72,9 +84,24 @@ describe('toAction and report encoding', () => {
 	})
 })
 
+describe('upkeepActions', () => {
+	test('executes every ready batch', () => {
+		expect(upkeepActions([3n, 4n], 0n, [])).toEqual([
+			{ kind: KIND_EXECUTE_BATCH, id: 3n, outcome: 0 },
+			{ kind: KIND_EXECUTE_BATCH, id: 4n, outcome: 0 },
+		])
+	})
+	test('donates when fees are accrued or a resolve in this report accrues them', () => {
+		const donate = { kind: KIND_DONATE_FEES, id: 0n, outcome: 0 }
+		expect(upkeepActions([], 5n, [])).toEqual([donate])
+		expect(upkeepActions([], 0n, [{ kind: KIND_RESOLVE, id: 1n, outcome: 0 }])).toEqual([donate])
+		expect(upkeepActions([], 0n, [{ kind: KIND_CANCEL, id: 1n, outcome: 0 }])).toEqual([])
+	})
+})
+
 test('one cron handler on the configured schedule', () => {
 	const handlers = initWorkflow({
-		schedule: '0 */10 * * * *', chainSelectorName: 'ethereum-testnet-sepolia', markets: '0x0', receiver: '0x0',
+		schedule: '0 */10 * * * *', chainSelectorName: 'ethereum-testnet-sepolia', markets: '0x0', receiver: '0x0', batches: '0x0',
 		readAt: 'latest', maxMarketsPerRun: 4, espnBaseUrl: 'https://x', gasLimit: '1',
 	})
 	expect(handlers).toHaveLength(1)

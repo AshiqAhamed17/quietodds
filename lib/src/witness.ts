@@ -38,17 +38,33 @@ export interface RedeemArgs {
   fee: bigint;
 }
 
-/** Markets.redeemTerms, the ratio the contract plugs into the redeem proof. */
+/**
+ * The ratio the contract plugs into the redeem proof: Markets.redeemTerms for
+ * positions, BatchSwapper.redeemTerms for tickets (no side rule, and the
+ * payout is in the batch's output asset).
+ */
 export interface RedeemTerms {
   num: bigint;
   den: bigint;
   requiredSide: bigint;
   anySide: boolean;
+  /** Defaults to USDC (markets pay out in USDC). */
+  assetOut?: bigint;
 }
+
+/** BatchSwapper.redeemTerms -> RedeemTerms */
+export const ticketTerms = (num: bigint, den: bigint, assetOut: bigint): RedeemTerms => ({
+  num,
+  den,
+  requiredSide: 0n,
+  anySide: true,
+  assetOut,
+});
 
 export type SpendAction =
   | { type: "withdraw"; recipient: Address }
-  | { type: "bet"; market: bigint; side: bigint };
+  | { type: "bet"; market: bigint; side: bigint }
+  | { type: "batchJoin"; batch: bigint };
 
 export interface SpendPlan {
   inputs: InputMap;
@@ -83,7 +99,7 @@ function pathInputs(tree: MerkleTree, note: OwnedNote) {
 /**
  * Spends one balance note: `publicAmount` goes to the action, `fee` to the
  * relayer, and the rest returns as a hidden change note at `changeIndex`.
- * A bet also creates a position note at `changeIndex + 1`.
+ * A bet (or batch join) also creates a position (or ticket) note at `changeIndex + 1`.
  */
 export async function buildSpend(p: {
   keys: Keys;
@@ -115,6 +131,15 @@ export async function buildSpend(p: {
     if (action.recipient === zeroAddress) throw new Error("withdraw needs a recipient");
     actionType = ACTION.WITHDRAW;
     recipient = action.recipient;
+  } else if (action.type === "batchJoin") {
+    if (publicAmount === 0n) throw new Error("empty join");
+    actionType = ACTION.BATCH_JOIN;
+    param1 = action.batch;
+    const out = deriveNote(keys, p.changeIndex + 1);
+    outPrecommitment = out.precommitment;
+    const ticket: NoteData = { kind: "ticket", index: p.changeIndex + 1, batch: action.batch, amountIn: publicAmount };
+    created.push(ticket);
+    outCiphertext = await encryptNote(keys.viewingKey, ticket);
   } else {
     if (asset !== ASSET.USDC) throw new Error("bets are USDC only");
     if (publicAmount === 0n) throw new Error("empty bet");
@@ -168,8 +193,9 @@ export async function buildSpend(p: {
 }
 
 /**
- * Redeems a position under `terms`: payout = floor(stake * num / den), minus
- * `fee` for the relayer, lands in a hidden USDC note at `outIndex`.
+ * Redeems a position or batch ticket under `terms`: payout =
+ * floor(x * num / den), minus `fee` for the relayer, lands in a hidden
+ * balance note of `terms.assetOut` at `outIndex`.
  */
 export async function buildRedeem(p: {
   keys: Keys;
@@ -182,33 +208,43 @@ export async function buildRedeem(p: {
 }): Promise<RedeemPlan> {
   const { keys, note, tree, terms, fee } = p;
   if (note.spent) throw new Error("note already spent");
-  if (note.data.kind !== "position") throw new Error("only positions are redeemable here");
-  const { market, side, stake } = note.data;
-  if (!terms.anySide && side !== terms.requiredSide) throw new Error("losing side");
-  const payout = (stake * terms.num) / terms.den;
+  const assetOut = terms.assetOut ?? ASSET.USDC;
+  let kind: bigint, id: bigint, x: bigint, side: bigint;
+  if (note.data.kind === "position") {
+    ({ market: id, side, stake: x } = note.data);
+    kind = TAG.POSITION;
+    if (!terms.anySide && side !== terms.requiredSide) throw new Error("losing side");
+  } else if (note.data.kind === "ticket") {
+    ({ batch: id, amountIn: x } = note.data);
+    kind = TAG.TICKET;
+    side = 0n;
+  } else {
+    throw new Error("only positions and tickets are redeemable");
+  }
+  const payout = (x * terms.num) / terms.den;
   if (fee < 0n || fee > payout) throw new Error("fee exceeds payout");
 
   const out = deriveNote(keys, p.outIndex);
-  const outData: NoteData = { kind: "balance", index: p.outIndex, asset: ASSET.USDC, amount: payout - fee };
+  const outData: NoteData = { kind: "balance", index: p.outIndex, asset: assetOut, amount: payout - fee };
   const { root, ...path } = pathInputs(tree, note);
   const args: RedeemArgs = {
     root,
     nullifierHash: note.secrets.nullifierHash,
-    kind: TAG.POSITION,
-    id: market,
-    outCommitment: balanceLeaf(ASSET.USDC, payout - fee, out.precommitment),
+    kind,
+    id,
+    outCommitment: balanceLeaf(assetOut, payout - fee, out.precommitment),
     relayer: p.relayer,
     fee,
   };
   const inputs: InputMap = {
-    x: dec(stake),
+    x: dec(x),
     side: dec(side),
     nullifier: dec(note.secrets.nullifier),
     secret: dec(note.secrets.secret),
     ...path,
     payout: dec(payout),
     out_precommitment: dec(out.precommitment),
-    ...publicInputMap(REDEEM_PUBLIC, redeemPublicValues(args, terms, ASSET.USDC)),
+    ...publicInputMap(REDEEM_PUBLIC, redeemPublicValues(args, terms, assetOut)),
   };
   return { inputs, args, outCiphertext: await encryptNote(keys.viewingKey, outData), payout, created: [outData] };
 }
@@ -237,7 +273,7 @@ export const redeemPublicValues = (a: RedeemArgs, t: RedeemTerms, assetOut: bigi
 
 /** The public inputs a verifier checks, as the 32-byte words bb emits. */
 export const spendPublicInputs = (a: SpendArgs): Hex[] => spendPublicValues(a).map(toBytes32);
-export const redeemPublicInputs = (a: RedeemArgs, t: RedeemTerms, assetOut = ASSET.USDC): Hex[] =>
+export const redeemPublicInputs = (a: RedeemArgs, t: RedeemTerms, assetOut = t.assetOut ?? ASSET.USDC): Hex[] =>
   redeemPublicValues(a, t, assetOut).map(toBytes32);
 
 function publicInputMap(names: readonly string[], values: bigint[]): InputMap {

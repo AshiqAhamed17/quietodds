@@ -7,8 +7,8 @@ import {
   type Hex, type PublicClient, type Transport, type WalletClient,
 } from "viem";
 import {
-  ACTION, ASSET, TAG, marketsAbi, redeemPublicInputs, shieldedPoolAbi, spendPublicInputs,
-  type RedeemArgs, type RedeemTerms, type SpendArgs,
+  ACTION, ASSET, TAG, batchSwapperAbi, marketsAbi, redeemPublicInputs, shieldedPoolAbi, spendPublicInputs,
+  ticketTerms, type RedeemArgs, type RedeemTerms, type SpendArgs,
 } from "@quietodds/lib";
 import type { CircuitName, Prover } from "@quietodds/lib/prover";
 import type { FeePolicy } from "./config.ts";
@@ -45,7 +45,13 @@ export interface Quote {
   gasPrice: string;
   validForSeconds: number;
   /** Minimum fee per call kind, in the asset's base units. */
-  fees: { withdraw: { usdc: string; weth: string }; bet: { usdc: string }; redeem: { usdc: string } };
+  fees: {
+    withdraw: { usdc: string; weth: string };
+    bet: { usdc: string };
+    batchJoin: { usdc: string; weth: string };
+    /** Ticket redeems pay in the batch's output asset. */
+    redeem: { usdc: string; weth: string };
+  };
 }
 
 /** Pool backups are a few hundred bytes; cap them so calldata stays cheap. */
@@ -104,7 +110,10 @@ export function createRelayer(d: RelayerDeps) {
       withdrawUsdc: usdc(d.fees.spendGas),
       withdrawWeth: weth(d.fees.spendGas),
       betUsdc: usdc(d.fees.spendGas),
+      joinUsdc: usdc(d.fees.spendGas),
+      joinWeth: weth(d.fees.spendGas),
       redeemUsdc: usdc(d.fees.redeemGas),
+      redeemWeth: weth(d.fees.redeemGas),
     };
     const quote: Quote = {
       relayer: account.address,
@@ -114,11 +123,18 @@ export function createRelayer(d: RelayerDeps) {
       fees: {
         withdraw: { usdc: raw.withdrawUsdc.toString(), weth: raw.withdrawWeth.toString() },
         bet: { usdc: raw.betUsdc.toString() },
-        redeem: { usdc: raw.redeemUsdc.toString() },
+        batchJoin: { usdc: raw.joinUsdc.toString(), weth: raw.joinWeth.toString() },
+        redeem: { usdc: raw.redeemUsdc.toString(), weth: raw.redeemWeth.toString() },
       },
     };
     cached = { at: Date.now(), quote, raw };
     return cached;
+  }
+
+  let batches: Address | undefined;
+  async function batchSwapper(): Promise<Address> {
+    batches ??= await d.publicClient.readContract({ address: d.pool, abi: shieldedPoolAbi, functionName: "batches" });
+    return batches;
   }
 
   async function requireFee(fee: bigint, key: string) {
@@ -205,13 +221,15 @@ export function createRelayer(d: RelayerDeps) {
       } else if (a.actionType === ACTION.BET) {
         if (a.asset !== ASSET.USDC) throw new RelayError(400, "bets are USDC only");
         feeKey = "betUsdc";
+      } else if (a.actionType === ACTION.BATCH_JOIN) {
+        feeKey = a.asset === ASSET.USDC ? "joinUsdc" : "joinWeth";
       } else {
         throw new RelayError(400, "unsupported action");
       }
       await requireFee(a.fee, feeKey);
       await checkState(a.root, a.nullifierHash);
       await verify("spend", r.proof, spendPublicInputs(a));
-      const label = a.actionType === ACTION.BET ? "bet" : "withdraw";
+      const label = a.actionType === ACTION.BET ? "bet" : a.actionType === ACTION.BATCH_JOIN ? "join" : "withdraw";
       return send(label, a.nullifierHash, {
         functionName: "spend",
         args: [a, r.proof, r.changeCiphertext, r.outCiphertext],
@@ -221,18 +239,29 @@ export function createRelayer(d: RelayerDeps) {
     async redeem(r: RedeemRequest): Promise<RelayResult> {
       const a = r.args;
       checkCommon(a.relayer, [r.outCiphertext]);
-      if (a.kind !== TAG.POSITION) throw new RelayError(400, "unsupported redeem kind");
-      await requireFee(a.fee, "redeemUsdc");
-      await checkState(a.root, a.nullifierHash);
+      if (a.kind !== TAG.POSITION && a.kind !== TAG.TICKET) throw new RelayError(400, "unsupported redeem kind");
       let terms: RedeemTerms;
-      try {
-        const [num, den, requiredSide, anySide] = await d.publicClient.readContract({
-          address: d.markets, abi: marketsAbi, functionName: "redeemTerms", args: [a.id],
-        });
-        terms = { num, den, requiredSide: BigInt(requiredSide), anySide };
-      } catch {
-        throw new RelayError(409, "market is not resolved yet");
+      if (a.kind === TAG.POSITION) {
+        try {
+          const [num, den, requiredSide, anySide] = await d.publicClient.readContract({
+            address: d.markets, abi: marketsAbi, functionName: "redeemTerms", args: [a.id],
+          });
+          terms = { num, den, requiredSide: BigInt(requiredSide), anySide };
+        } catch {
+          throw new RelayError(409, "market is not resolved yet");
+        }
+      } else {
+        try {
+          const [num, den, assetOut] = await d.publicClient.readContract({
+            address: await batchSwapper(), abi: batchSwapperAbi, functionName: "redeemTerms", args: [a.id],
+          });
+          terms = ticketTerms(num, den, assetOut);
+        } catch {
+          throw new RelayError(409, "batch has not executed yet");
+        }
       }
+      await requireFee(a.fee, terms.assetOut === ASSET.WETH ? "redeemWeth" : "redeemUsdc");
+      await checkState(a.root, a.nullifierHash);
       await verify("redeem", r.proof, redeemPublicInputs(a, terms));
       return send("redeem", a.nullifierHash, { functionName: "redeem", args: [a, r.proof, r.outCiphertext] });
     },

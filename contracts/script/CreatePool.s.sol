@@ -8,8 +8,10 @@ import {IPoolManager} from "@uniswap/v4-core/src/interfaces/IPoolManager.sol";
 import {PoolKey} from "@uniswap/v4-core/src/types/PoolKey.sol";
 import {PoolId} from "@uniswap/v4-core/src/types/PoolId.sol";
 import {HookConfig} from "./HookConfig.sol";
+import {BatchSwapper} from "../src/BatchSwapper.sol";
 
-/// Opens the ETH/USDC pool with our hook at the Chainlink ETH/USD price.
+/// Opens the ETH/USDC pool with our hook at the Chainlink ETH/USD price, and
+/// points the BatchSwapper at it.
 contract CreatePool is HookConfig {
     function run() external {
         uint256 pk = vm.envUint("DEPLOYER_PRIVATE_KEY");
@@ -18,6 +20,7 @@ contract CreatePool is HookConfig {
 
         vm.startBroadcast(pk);
         int24 tick = IPoolManager(POOL_MANAGER).initialize(key, sqrtPriceX96);
+        BatchSwapper(payable(vm.parseJsonAddress(vm.readFile(CORE_JSON), ".BatchSwapper"))).setPoolKey(key);
         vm.stopBroadcast();
 
         bytes32 id = PoolId.unwrap(key.toId());

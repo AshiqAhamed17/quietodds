@@ -1,7 +1,9 @@
 // QuietOdds resolver. Every run: read open markets past their close time
 // from Markets, fetch each result (Chainlink price feed or ESPN), agree on it
 // across the DON, and send one signed report to ResolverReceiver, which
-// resolves or cancels the markets on chain.
+// resolves or cancels the markets on chain. The same report executes any
+// private batch swap whose interval is over and donates the markets' 1% fee
+// to the Uniswap pool's LPs.
 import {
 	bytesToHex,
 	consensusMedianAggregation,
@@ -38,6 +40,7 @@ import {
 	sportsOutcome,
 	STATUS_OPEN,
 	toAction,
+	upkeepActions,
 } from './logic'
 
 export const configSchema = z.object({
@@ -45,6 +48,7 @@ export const configSchema = z.object({
 	chainSelectorName: z.string(),
 	markets: z.string(),
 	receiver: z.string(),
+	batches: z.string(),
 	/** "latest" for fast demos, "finalized" for production. */
 	readAt: z.enum(['latest', 'finalized']).default('finalized'),
 	/** Keeps a run inside CRE's per-execution call limits. */
@@ -59,6 +63,11 @@ const marketsAbi = parseAbi([
 	'struct Market { string question; string outcomes; uint8 numSides; uint64 closeTime; uint8 source; string sourceRef; address priceFeed; int256 threshold; uint8 status; uint8 winningSide; uint256 pot; uint256 protocolFee; }',
 	'function getMarket(uint256 marketId) view returns (Market)',
 ])
+const batchesAbi = parseAbi([
+	'function currentBatch(uint8 direction) view returns (uint256)',
+	'function isExecutable(uint256 batchId) view returns (bool)',
+])
+const feesAbi = parseAbi(['function feesAccrued() view returns (uint256)'])
 const feedAbi = parseAbi([
 	'function latestRoundData() view returns (uint80, int256, uint256, uint256, uint80)',
 ])
@@ -123,6 +132,17 @@ export const onCron = (runtime: Runtime<Config>): string => {
 		runtime.log(`market ${id} "${m.question}": ${action ? `kind ${action.kind} outcome ${action.outcome}` : 'no result yet'}`)
 		if (action) actions.push(action)
 	}
+
+	// Upkeep: ready batches (USDC->WETH, WETH->USDC) and the LP donation.
+	const ready: bigint[] = []
+	for (const direction of [0, 1]) {
+		const id = read(cfg.batches, batchesAbi, 'currentBatch', [direction]) as bigint
+		if (read(cfg.batches, batchesAbi, 'isExecutable', [id]) as boolean) ready.push(id)
+	}
+	const fees = read(cfg.markets, feesAbi, 'feesAccrued') as bigint
+	const upkeep = upkeepActions(ready, fees, actions)
+	for (const a of upkeep) runtime.log(a.kind === 3 ? `batch ${a.id} ready to execute` : `donating market fees to LPs`)
+	actions.push(...upkeep)
 
 	if (actions.length === 0) return `checked ${checked} closed market(s), nothing to report`
 

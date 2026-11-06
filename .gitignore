@@ -23,3 +23,6 @@ CLAUDE.md
 circuits/**/Prover_*.toml
 deployments/quietodds-local.json
 relayer/.vercel/
+
+# Personal study notes (Lean / formal verification)
+learn/

@@ -9,6 +9,7 @@ import { usePrivateAccount } from "@/components/PrivateAccount";
 import { useMarkets } from "@/hooks/useMarkets";
 import { usdc, weth } from "@/lib/format";
 import { RedeemRow } from "@/components/RedeemRow";
+import { BetQueueList } from "@/components/BetQueue";
 import { useState } from "react";
 import { explorerTx } from "@/lib/contract";
 
@@ -73,7 +74,7 @@ export function ScanBar() {
           {scan.phase === "done" ? "Private account unlocked" : scan.phase === "error" ? "Scan failed" : "Scanning…"}
         </span>
         <span className="scanbar-actions">
-          <button className="btn" onClick={() => void rescan()} disabled={scan.phase === "logs" || scan.phase === "decrypt"}>
+          <button className="btn" onClick={() => void rescan(true)} disabled={scan.phase === "logs" || scan.phase === "decrypt"}>
             Rescan
           </button>
           <button className="btn" onClick={lock}>
@@ -132,6 +133,8 @@ function Holdings() {
           ))}
         </section>
       )}
+
+      <BetQueueList />
 
       <section className="panel">
         <h2>Bets</h2>

@@ -13,7 +13,9 @@ import {
   shieldedBalance,
   type Keys,
   type OwnedNote,
+  type PoolState,
 } from "@quietodds/lib";
+import { getProver } from "@/lib/private";
 import { DEPLOYMENT } from "@/lib/contract";
 
 export type ScanPhase = "idle" | "logs" | "decrypt" | "done" | "error";
@@ -35,7 +37,8 @@ interface PrivateAccount {
   notes: OwnedNote[];
   tree: MerkleTree | null;
   scan: ScanState;
-  rescan: () => Promise<void>;
+  /** Incremental by default (only new blocks); `full` re-reads from the deploy block. */
+  rescan: (full?: boolean) => Promise<void>;
   /** Fresh notes and tree, straight from the chain, for building a proof. */
   sync: () => Promise<{ notes: OwnedNote[]; tree: MerkleTree }>;
   /**
@@ -69,6 +72,8 @@ export function PrivateAccountProvider({ children }: { children: React.ReactNode
   const [scan, setScan] = useState<ScanState>({ phase: "idle", progress: 0, detail: "" });
   const scanId = useRef(0);
   const reserved = useRef(0);
+  // The last scan, so a sync only reads blocks since then.
+  const cache = useRef<{ state: PoolState; owned: OwnedNote[] } | null>(null);
 
   // A different wallet is a different private account.
   useEffect(() => {
@@ -77,13 +82,37 @@ export function PrivateAccountProvider({ children }: { children: React.ReactNode
     setTree(null);
     setScan({ phase: "idle", progress: 0, detail: "" });
     reserved.current = 0;
+    cache.current = null;
   }, [address]);
 
   const runScan = useCallback(
-    async (k: Keys): Promise<{ notes: OwnedNote[]; tree: MerkleTree } | null> => {
+    async (k: Keys, incremental = false): Promise<{ notes: OwnedNote[]; tree: MerkleTree } | null> => {
       if (!client) return null;
       const id = ++scanId.current;
       const live = () => id === scanId.current;
+      const prev = cache.current;
+      if (incremental && prev) {
+        try {
+          // Overlap the last scan by ~4 minutes: a lagging RPC node may have missed its tail.
+          const from = prev.state.toBlock > DEPLOYMENT.deployBlock + 20n ? prev.state.toBlock - 20n : DEPLOYMENT.deployBlock;
+          const delta = await fetchPoolState(client as never, DEPLOYMENT.pool, from, { firstIndex: prev.state.leaves.length });
+          if (!live()) return null;
+          const nullifiers = new Set([...prev.state.nullifiers, ...delta.nullifiers]);
+          const leaves = [...prev.state.leaves, ...delta.leaves];
+          const fresh = await scanNotes(k, delta.leaves, (h) => nullifiers.has(h));
+          const owned = [...prev.owned, ...fresh].map((n) => ({ ...n, spent: nullifiers.has(n.secrets.nullifierHash) }));
+          const toBlock = delta.toBlock > prev.state.toBlock ? delta.toBlock : prev.state.toBlock;
+          cache.current = { state: { leaves, nullifiers, toBlock }, owned };
+          const t = new MerkleTree(leaves.map((l) => l.leaf));
+          setNotes(owned);
+          setTree(t);
+          const mine = owned.filter((n) => !n.spent).length;
+          setScan({ phase: "done", progress: 1, detail: `${mine} unspent note${mine === 1 ? "" : "s"} · synced to block ${toBlock}` });
+          return { notes: owned, tree: t };
+        } catch {
+          // fall through to a full scan
+        }
+      }
       try {
         setScan({ phase: "logs", progress: 0, detail: "Reading the pool's history through Anon-RPC…" });
         const state = await fetchPoolState(client as never, DEPLOYMENT.pool, DEPLOYMENT.deployBlock, {
@@ -99,6 +128,7 @@ export function PrivateAccountProvider({ children }: { children: React.ReactNode
           if (live() && total > 0) setScan({ phase: "decrypt", progress: 0.7 + 0.3 * (done / total), detail: `Decrypted ${done} of ${total} backups` });
         });
         if (!live()) return null;
+        cache.current = { state, owned };
         const t = new MerkleTree(state.leaves.map((l) => l.leaf));
         setNotes(owned);
         setTree(t);
@@ -119,6 +149,8 @@ export function PrivateAccountProvider({ children }: { children: React.ReactNode
       const k = keysFromSignature(await signMessageAsync({ message: KEY_MESSAGE }));
       setKeys(k);
       void runScan(k);
+      // Load bb.js, the circuits and the proving setup while the user looks around.
+      void getProver().then((p) => p.warm()).catch(() => undefined);
     } finally {
       setUnlocking(false);
     }
@@ -130,15 +162,19 @@ export function PrivateAccountProvider({ children }: { children: React.ReactNode
     setNotes([]);
     setTree(null);
     setScan({ phase: "idle", progress: 0, detail: "" });
+    cache.current = null;
   }, []);
 
-  const rescan = useCallback(async () => {
-    if (keys) await runScan(keys);
-  }, [keys, runScan]);
+  const rescan = useCallback(
+    async (full = false) => {
+      if (keys) await runScan(keys, !full);
+    },
+    [keys, runScan],
+  );
 
   const sync = useCallback(async () => {
     if (!keys) throw new Error("Unlock your private account first");
-    const fresh = await runScan(keys);
+    const fresh = await runScan(keys, true);
     if (!fresh) throw new Error("Couldn't read the pool. Try again.");
     return fresh;
   }, [keys, runScan]);

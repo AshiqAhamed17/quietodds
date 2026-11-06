@@ -50,6 +50,18 @@ export class Prover {
     return c;
   }
 
+  /**
+   * Loads circuits, noir_js and the proving setup ahead of time, so the first
+   * real proof doesn't pay for them. Safe to call in the background.
+   */
+  async warm(names: CircuitName[] = ["spend", "redeem"]): Promise<void> {
+    for (const name of names) {
+      const c = await this.load(name);
+      if (!c.noir) c.noir = new (await import("@noir-lang/noir_js")).Noir(c.circuit);
+      await c.backend.getVerificationKey(TARGET); // fetches the CRS points this circuit needs
+    }
+  }
+
   async prove(name: CircuitName, inputs: InputMap): Promise<Proof> {
     const c = await this.load(name);
     // noir_js only executes witnesses; verify-only users (the relayer) never load it.

@@ -26,7 +26,14 @@ export async function fetchPoolState(
     chunk = 40_000n,
     toBlock,
     onProgress,
-  }: { chunk?: bigint; toBlock?: bigint; onProgress?: (scannedBlocks: bigint, totalBlocks: bigint) => void } = {},
+    firstIndex = 0,
+  }: {
+    chunk?: bigint;
+    toBlock?: bigint;
+    onProgress?: (scannedBlocks: bigint, totalBlocks: bigint) => void;
+    /** Incremental scan: leaves below this index are already known and dropped. */
+    firstIndex?: number;
+  } = {},
 ): Promise<PoolState> {
   const end = toBlock ?? (await client.getBlockNumber({ cacheTime: 0 }));
   const total = end >= fromBlock ? end - fromBlock + 1n : 0n;
@@ -48,8 +55,10 @@ export async function fetchPoolState(
     onProgress?.(stop - fromBlock + 1n, total);
   }
   leaves.sort((a, b) => a.index - b.index);
+  // An incremental scan overlaps the previous one (lagging nodes), so drop leaves already known.
+  if (firstIndex > 0) leaves.splice(0, leaves.findIndex((l) => l.index >= firstIndex) === -1 ? leaves.length : leaves.findIndex((l) => l.index >= firstIndex));
   leaves.forEach((l, i) => {
-    if (l.index !== i) throw new Error(`missing leaf ${i}: scan from the pool's deploy block`);
+    if (l.index !== firstIndex + i) throw new Error(`missing leaf ${firstIndex + i}: rescan from the pool's deploy block`);
   });
   return { leaves, nullifiers, toBlock: end };
 }

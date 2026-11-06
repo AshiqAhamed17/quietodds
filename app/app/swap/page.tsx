@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
+import { BetQueueList } from "@/components/BetQueue";
+import { betQueue } from "@/lib/betQueue";
 import { formatEther, formatUnits, parseUnits } from "viem";
 import { useAccount, usePublicClient, useWriteContract } from "wagmi";
 import { useQuery } from "@tanstack/react-query";
@@ -17,8 +19,7 @@ import { AmbientField } from "@/components/AmbientField";
 import { ActionStatus, useAction } from "@/components/ActionStatus";
 import { PrivateGate } from "@/components/PrivateGate";
 import { usePrivateAccount } from "@/components/PrivateAccount";
-import { DEPLOYMENT, Status, erc20Abi, explorerAddress, explorerTx } from "@/lib/contract";
-import { relayedSpend } from "@/lib/private";
+import { DEPLOYMENT, Status, erc20Abi, explorerAddress } from "@/lib/contract";
 import { isClosed, useMarkets } from "@/hooks/useMarkets";
 import { usdc } from "@/lib/format";
 
@@ -61,18 +62,6 @@ const quoterAbi = [
 const key = DEPLOYMENT.poolKey;
 const BET_FEE = 50_000n; // relayer's bet fee floor (0.05 USDC)
 
-interface QueuedBet {
-  id: number;
-  market: bigint;
-  question: string;
-  side: number;
-  sideLabel: string;
-  amount: bigint;
-  dueAt: number;
-  status: "waiting" | "betting" | "done" | "failed";
-  detail?: string;
-  tx?: string;
-}
 
 export default function SwapPage() {
   return (
@@ -109,7 +98,6 @@ function SwapForm() {
   const [betOn, setBetOn] = useState(false);
   const [marketId, setMarketId] = useState<string>("");
   const [side, setSide] = useState(0);
-  const [queue, setQueue] = useState<QueuedBet[]>([]);
   const { state, run } = useAction();
 
   const market = open.find((m) => m.id.toString() === marketId) ?? open[0];
@@ -186,19 +174,14 @@ function SwapForm() {
 
       if (betOn && market) {
         const delay = 60_000 + Math.floor(Math.random() * 9 * 60_000);
-        setQueue((q) => [
-          {
-            id: Date.now(),
-            market: market.id,
-            question: market.question,
-            side,
-            sideLabel: market.outcomes[side],
-            amount: shieldAmt - BET_FEE,
-            dueAt: Date.now() + delay,
-            status: "waiting",
-          },
-          ...q,
-        ]);
+        betQueue.add(address!, {
+          market: market.id.toString(),
+          question: market.question,
+          side,
+          sideLabel: market.outcomes[side],
+          amount: (shieldAmt - BET_FEE).toString(),
+          dueAt: Date.now() + delay,
+        });
       }
       return {
         txHash: hash,
@@ -313,73 +296,8 @@ function SwapForm() {
         <a className="doclink mono" href={explorerAddress(DEPLOYMENT.hook)} target="_blank" rel="noreferrer">
           QuietOddsHook ↗
         </a>
-        <BetQueue queue={queue} setQueue={setQueue} />
+        <BetQueueList />
       </section>
-    </div>
-  );
-}
-
-/// Bets waiting for their random delay. They run from this tab: keep it open.
-function BetQueue({ queue, setQueue }: { queue: QueuedBet[]; setQueue: React.Dispatch<React.SetStateAction<QueuedBet[]>> }) {
-  const acct = usePrivateAccount();
-  const [now, setNow] = useState(() => Date.now());
-  const running = useRef(new Set<number>());
-
-  useEffect(() => {
-    const t = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(t);
-  }, []);
-
-  useEffect(() => {
-    for (const b of queue) {
-      if (b.status !== "waiting" || b.dueAt > now || running.current.has(b.id)) continue;
-      running.current.add(b.id);
-      const update = (u: Partial<QueuedBet>) => setQueue((q) => q.map((x) => (x.id === b.id ? { ...x, ...u } : x)));
-      update({ status: "betting", detail: "proving in your browser…" });
-      relayedSpend({
-        account: acct,
-        asset: ASSET.USDC,
-        amount: b.amount,
-        action: { type: "bet", market: b.market, side: BigInt(b.side) },
-      })
-        .then((r) => update({ status: "done", tx: r.txHash, detail: undefined }))
-        .catch((e) => update({ status: "failed", detail: e instanceof Error ? e.message : String(e) }));
-    }
-  }, [now, queue, acct, setQueue]);
-
-  if (queue.length === 0) return null;
-  return (
-    <div className="bet-queue">
-      <h3>Queued private bets</h3>
-      <p className="hint">These run from this tab; keep it open until they&apos;re placed.</p>
-      {queue.map((b) => {
-        const left = Math.max(0, Math.round((b.dueAt - now) / 1000));
-        return (
-          <div key={b.id} className="kv">
-            <span>
-              {usdc(b.amount)} on {b.sideLabel} · {b.question}
-            </span>
-            <b className="mono">
-              {b.status === "waiting" ? (
-                <>
-                  in {Math.floor(left / 60)}:{(left % 60).toString().padStart(2, "0")}{" "}
-                  <button className="btn" onClick={() => setQueue((q) => q.map((x) => (x.id === b.id ? { ...x, dueAt: Date.now() } : x)))}>
-                    now
-                  </button>
-                </>
-              ) : b.status === "done" ? (
-                <a href={explorerTx(b.tx!)} target="_blank" rel="noreferrer">
-                  placed ✓
-                </a>
-              ) : b.status === "failed" ? (
-                <span className="tag-no">{b.detail}</span>
-              ) : (
-                b.detail
-              )}
-            </b>
-          </div>
-        );
-      })}
     </div>
   );
 }

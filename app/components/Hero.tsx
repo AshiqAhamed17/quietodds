@@ -14,7 +14,7 @@ export function Hero() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
         >
-          Private bets · private swaps · Uniswap v4
+          Private bets and private swaps on Uniswap v4
         </motion.p>
         <motion.h1
           className="wordmark hero3d-wordmark"
@@ -22,7 +22,7 @@ export function Hero() {
           animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
           transition={{ duration: 1.3, ease, delay: 0.3 }}
         >
-          QUIETODDS
+          QuietOdds
         </motion.h1>
         <motion.p
           className="hero3d-tag"
@@ -43,7 +43,7 @@ export function Hero() {
         <span>
           Built with <b>Noir</b> · <b>Uniswap v4</b> · <b>Chainlink CRE</b> · <b>Anon-RPC</b>
         </span>
-        <span className="scrollcue">Scroll to explore ↓</span>
+        <span className="scrollcue">Scroll</span>
       </motion.div>
     </section>
   );

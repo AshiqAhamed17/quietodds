@@ -2,12 +2,12 @@ export function Features() {
   return (
     <section className="band wrap" id="features">
       <div className="kicker">
-        <b>The protocol</b> — five guarantees
+        What you get
       </div>
       <div className="landing-h2">Public odds. Private&nbsp;bettors.</div>
       <div className="bento">
         <article className="feat wide">
-          <div className="n">01 — SHIELDED BALANCE</div>
+          <div className="n">Shielded balance</div>
           <h3>Deposit once, act privately</h3>
           <p>
             Your USDC becomes a hidden note in a Poseidon Merkle tree. Every bet, claim and swap after
@@ -20,7 +20,7 @@ export function Features() {
           </div>
         </article>
         <article className="feat reg">
-          <div className="n">02 — SWAP-AND-BET HOOK</div>
+          <div className="n">Uniswap v4 hook</div>
           <h3>Bet straight from a Uniswap swap</h3>
           <p>
             Our v4 hook shields part of any ETH/USDC swap into your private balance in the same
@@ -28,17 +28,17 @@ export function Features() {
           </p>
         </article>
         <article className="feat third">
-          <div className="n">03 — PRIVATE BATCH SWAPS</div>
+          <div className="n">Private batch swaps</div>
           <h3>One swap, many owners</h3>
           <p>Join a batch privately; it executes as one swap through the pool. Everyone gets the same price, pro rata.</p>
         </article>
         <article className="feat third">
-          <div className="n">04 — NO HOUSE</div>
+          <div className="n">Who settles markets</div>
           <h3>Chainlink CRE decides</h3>
           <p>A CRE workflow reads ESPN or a Chainlink feed under DON consensus and settles on chain. No admin picks winners.</p>
         </article>
         <article className="feat third">
-          <div className="n">05 — LPS GET PAID</div>
+          <div className="n">Liquidity providers</div>
           <h3>Bets fund liquidity</h3>
           <p>The 1% market fee is donated to the Uniswap pool&apos;s LPs. The prediction market makes the pool deeper.</p>
         </article>

@@ -2,7 +2,7 @@ export function LandingFooter() {
   return (
     <footer>
       <div className="wrap">
-        <h2 className="foot-wordmark">QUIETODDS</h2>
+        <h2 className="foot-wordmark">QuietOdds</h2>
       </div>
       <div className="wrap foot-links">
         <a href="https://github.com/AshiqAhamed17/quietodds" target="_blank" rel="noreferrer">

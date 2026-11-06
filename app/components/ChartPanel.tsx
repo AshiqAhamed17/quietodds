@@ -23,7 +23,7 @@ export function ChartPanel({
   height?: number;
 }) {
   const product = candleProductForFeed(feed);
-  const [mode, setMode] = useState<"line" | "candles">("line");
+  const [mode, setMode] = useState<"line" | "candles">(product ? "candles" : "line");
   const { candles, loading, error } = useCandles(mode === "candles" ? product : null);
 
   return (

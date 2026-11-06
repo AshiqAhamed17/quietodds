@@ -8,6 +8,9 @@ import { ConnectButton } from "@/components/ConnectButton";
 import { usePrivateAccount } from "@/components/PrivateAccount";
 import { useMarkets } from "@/hooks/useMarkets";
 import { usdc, weth } from "@/lib/format";
+import { RedeemRow } from "@/components/RedeemRow";
+import { useState } from "react";
+import { explorerTx } from "@/lib/contract";
 
 export default function PortfolioPage() {
   const { isConnected } = useAccount();
@@ -88,6 +91,8 @@ export function ScanBar() {
 
 function Holdings() {
   const { notes, balances } = usePrivateAccount();
+  const [recent, setRecent] = useState<{ summary: string; tx: string }[]>([]);
+  const onDone = (summary: string, tx: string) => setRecent((r) => [{ summary, tx }, ...r]);
   const { markets } = useMarkets();
   const positions = unspentPositions(notes);
   const tickets = unspentTickets(notes);
@@ -114,28 +119,32 @@ function Holdings() {
         </div>
       </div>
 
+      {recent.length > 0 && (
+        <section className="panel">
+          <h2>Just now</h2>
+          {recent.map((x) => (
+            <p key={x.tx} className="hint mono">
+              {x.summary}{" "}
+              <a href={explorerTx(x.tx)} target="_blank" rel="noreferrer">
+                View tx ↗
+              </a>
+            </p>
+          ))}
+        </section>
+      )}
+
       <section className="panel">
         <h2>Bets</h2>
+        <p className="hint">Winning and refunded bets are claimed privately: the payout becomes a new hidden note, ready to bet again or withdraw.</p>
         {positions.length === 0 ? (
           <p className="hint">
             No open bets. <Link href="/markets">Browse markets →</Link>
           </p>
         ) : (
           <div className="obc-list">
-            {positions.map((n) => {
-              if (n.data.kind !== "position") return null;
-              const m = question(n.data.market);
-              return (
-                <div key={n.leafIndex} className="obc-row">
-                  <span className="obc-label">
-                    <Link href={`/markets/${n.data.market}`}>{m?.question ?? `Market #${n.data.market}`}</Link>
-                    {" · "}
-                    {m?.outcomes[Number(n.data.side)] ?? `side ${n.data.side}`}
-                  </span>
-                  <span className="obc-share mono">{usdc(n.data.stake)}</span>
-                </div>
-              );
-            })}
+            {positions.map((n) =>
+              n.data.kind === "position" ? <RedeemRow key={n.leafIndex} note={n} market={question(n.data.market)} onDone={onDone} /> : null,
+            )}
           </div>
         )}
       </section>
@@ -143,17 +152,14 @@ function Holdings() {
       <section className="panel">
         <h2>Batch tickets</h2>
         {tickets.length === 0 ? (
-          <p className="hint">No batch tickets.</p>
+          <p className="hint">
+            No batch tickets. <Link href="/batch">Join a private batch swap →</Link>
+          </p>
         ) : (
           <div className="obc-list">
-            {tickets.map((n) =>
-              n.data.kind === "ticket" ? (
-                <div key={n.leafIndex} className="obc-row">
-                  <span className="obc-label">Batch #{n.data.batch.toString()}</span>
-                  <span className="obc-share mono">{n.data.amountIn.toString()} in</span>
-                </div>
-              ) : null,
-            )}
+            {tickets.map((n) => (
+              <RedeemRow key={n.leafIndex} note={n} onDone={onDone} />
+            ))}
           </div>
         )}
       </section>

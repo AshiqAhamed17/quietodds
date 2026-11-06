@@ -31,18 +31,21 @@ export function useAction() {
 
 const ORDER: Step[] = ["sync", "prove", "relay", "done"];
 
-export function ActionStatus({ state }: { state: ActionState }) {
+/// `steps` overrides which steps show and their labels (e.g. a public deposit has no proof).
+export function ActionStatus({ state, steps }: { state: ActionState; steps?: Partial<Record<Step, string>> }) {
   if (!state.busy && !state.step && !state.error) return null;
   const at = state.step ? ORDER.indexOf(state.step) : -1;
   return (
     <div className={`action-status ${state.error ? "err" : ""}`} aria-live="polite">
       {!state.error && (
         <ol>
-          {ORDER.slice(0, 3).map((s, i) => (
-            <li key={s} className={i < at || state.step === "done" ? "ok" : i === at ? "now" : ""}>
-              {STEP_LABEL[s]}
-            </li>
-          ))}
+          {ORDER.slice(0, 3).map((s, i) =>
+            steps && !(s in steps) ? null : (
+              <li key={s} className={i < at || state.step === "done" ? "ok" : i === at ? "now" : ""}>
+                {steps?.[s] ?? STEP_LABEL[s]}
+              </li>
+            ),
+          )}
         </ol>
       )}
       {state.error && <p className="mono">{state.error}</p>}

@@ -3236,3 +3236,5 @@ main.page > .panel + .panel, main.page > .statrow + .panel { margin-top: 1.2rem;
 .toggle { display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.9rem; color: var(--fg, #fff) !important; }
 .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; margin-top: 1.4rem; }
 @media (max-width: 860px) { .two-col { grid-template-columns: 1fr; } }
+.redeem-row .obc-row { display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 1rem; }
+.redeem-row .obc-row .btn { padding: 0.4rem 0.8rem; font-size: 0.8rem; }

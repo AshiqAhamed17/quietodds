@@ -12,6 +12,8 @@ import { priceUsd } from "@/lib/format";
 const LINKS = [
   { href: "/markets", label: "Markets" },
   { href: "/deposit", label: "Deposit" },
+  { href: "/swap", label: "Swap" },
+  { href: "/batch", label: "Batch" },
   { href: "/portfolio", label: "Portfolio" },
 ];
 

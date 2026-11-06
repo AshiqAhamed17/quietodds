@@ -1,0 +1,14 @@
+{
+  "network": "sepolia",
+  "pool": "0xAC064dfd9713688dBDD90443C80c5161cdA20d95",
+  "batches": "0x027Fc4CE56eCBcC1dFabc1BD0a66EdEa2123d3bc",
+  "hook": "0x44Bca011EC6939c5621aa90Da0351835875200Cc",
+  "relayer": "http://localhost:8787",
+  "steps": [
+    {
+      "step": "createMarket",
+      "tx": "0x73a0df8e774201dedf870dbd256c3eeba2f0de0f651633f5694d1f40f3ab6ac3",
+      "gasUsed": "912463"
+    }
+  ]
+}

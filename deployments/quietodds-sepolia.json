@@ -1,26 +1,9 @@
 {
-  "Markets": "0xcff79Cc227b8bE772B28d910d059Ac5fF81d3854",
-  "RedeemVerifier": "0x781e767C5CBFC736b3F6FE74F824b25706152df5",
-  "ResolverReceiver": "0x053F4fd9b560a0C5a32B4Bd56cbe20B5300F1E51",
-  "ShieldedPool": "0x4fF62a3fDb324348ac988e23b5468BE016b15D55",
-  "SpendVerifier": "0x40B0703689004cC4e2857bc3AE7E93073185c126",
-  "deployBlock": 12072051,
-  "libraries": {
-    "PoseidonT3": "0x43Da74C1d857F1E3d61DFF1DF105B9cD8E1fD239",
-    "PoseidonT5": "0x73154a4abCcf4b187Cb77E13087574161E9AD844",
-    "PoseidonT6": "0x0EdDCEBcafA9023A770101368b94fa82C81490D3",
-    "RedeemVerifier_RelationsLib": "0x6DC22614BC1CE33CF062240F8a2F5E5d55512573",
-    "RedeemVerifier_ZKTranscriptLib": "0xA5A6D8A62e5EA5af85E578CDB00C5451587bc36f",
-    "SpendVerifier_RelationsLib": "0x93767aacB595D9F1Ae3E5f0feFA51aB28d619d4b",
-    "SpendVerifier_ZKTranscriptLib": "0xb7fb482EB02657ae01fF389a2C70825d3e068fC7"
-  },
-  "creForwarder": "simulation (MockKeystoneForwarder); switch with ResolverReceiver.setForwarder",
-  "markets": {
-    "1": "ETH > $2,300 at 18:00 UTC Nov 6 (price)",
-    "2": "Nottingham Forest vs Manchester City, Nov 7 17:30 UTC (espn eng.1 401878757)",
-    "3": "Valencia vs Real Madrid, Nov 7 20:00 UTC (espn esp.1 401882808)",
-    "4": "PSG vs Troyes, Nov 7 20:05 UTC (espn fra.1 401876407)",
-    "5": "BTC > $76,000 at 18:00 UTC Nov 7 (price)",
-    "6": "ETH > $2,500 at 12:00 UTC Nov 20 (price)"
-  }
+  "BatchSwapper": "0x027Fc4CE56eCBcC1dFabc1BD0a66EdEa2123d3bc",
+  "Markets": "0x42A29a66812aBDdCE241521E2E510885F3d38229",
+  "RedeemVerifier": "0x95Fdb53CE9EFf556BDE64289F1F3CbBcD842aCC0",
+  "ResolverReceiver": "0x5d83961b7F18EB5AeB61eFef67A84591A3d52BAC",
+  "ShieldedPool": "0xAC064dfd9713688dBDD90443C80c5161cdA20d95",
+  "SpendVerifier": "0xae49c6b47AB8Aa5d82b0b5315cEfC2DC4A758382",
+  "deployBlock": 12074989
 }

@@ -1,22 +1,26 @@
 {
-  "QuietOddsHook": "0x2DaF3FA0F8215d40e78D094c7edC6731082140cc",
-  "ShieldedPool": "0x4fF62a3fDb324348ac988e23b5468BE016b15D55",
-  "salt": "0x0000000000000000000000000000000000000000000000000000000000003ef4",
-  "poolId": "0x214af855d006f206d151aca5ac220fe2a828ac2cf02e1304006caf92498e45ca",
-  "positionId": 41416,
+  "QuietOddsHook": "0x44Bca011EC6939c5621aa90Da0351835875200Cc",
+  "ShieldedPool": "0xAC064dfd9713688dBDD90443C80c5161cdA20d95",
+  "salt": "0x0000000000000000000000000000000000000000000000000000000000001013",
+  "poolId": "0xaa8937888c0c0d5ea3e997b19c6c9104502f0c51aa25412a062c8234d31bba1b",
+  "positionId": 41433,
   "poolKey": {
     "currency0": "0x0000000000000000000000000000000000000000",
     "currency1": "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238",
-    "fee": 3000,
+    "fee": 8388608,
     "tickSpacing": 60,
-    "hooks": "0x2DaF3FA0F8215d40e78D094c7edC6731082140cc"
+    "hooks": "0x44Bca011EC6939c5621aa90Da0351835875200Cc"
   },
-  "initialTick": -199175,
-  "initialEthUsd": "2240.70 (Chainlink ETH/USD)",
+  "fee": "dynamic (0x800000): the hook charges 0.30%, or more for a swap that reverses the block's price move",
+  "initialTick": -199269,
+  "initialEthUsd": "2219.71 (Chainlink ETH/USD)",
   "txs": {
-    "deployHook": "0x1b69aaade87d2b315e72fb1c7f87fabcb4a9a34df4e543f2a8553165ccf950dd",
-    "initialize": "0x5be1db9409bd969035db9ed07f7cf672eea1c85851017fee4f411f49f568955a",
-    "mintPosition": "0x6a96df327ee64635293ba8e351c431b088825ae4eb5f1d43abe54b5a0b73cf75"
+    "deployHook": "0x87d936de5b5a3f2c5e3aefcfe8e826a5048438fa8a37201d004a4f5d1516b9e5",
+    "initialize": "0x5f58567a09591fa3beb1580d70887a9912558c29bbdf809ed0528527393435c1",
+    "setPoolKey": "0xf34efcee55d80dd893d504dab53493b542d0f4b443d0b34b4ce186d2cd55e5c6",
+    "mintPosition": "0x49d23a44b915552e4a2ecb38ae33b9f74c2223dc065b08c3797cb1f10985eae5",
+    "setSlippage500bps": "0xe049739a01279a9c9029f4181efc309a374f2b50ba2d82c7258331775410be19"
   },
-  "liquidity": "full range, 25 USDC + ~0.011 ETH, position NFT owned by the deployer"
+  "liquidity": "full range, 100 USDC + ~0.045 ETH, position NFT owned by the deployer",
+  "batchSlippage": "5% (testnet pool is thin; the contract default is 1%)"
 }

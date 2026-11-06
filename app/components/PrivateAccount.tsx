@@ -8,6 +8,8 @@ import {
   MerkleTree,
   fetchPoolState,
   keysFromSignature,
+  keysFromSpendingKey,
+  FIELD,
   nextNoteIndex,
   scanNotes,
   shieldedBalance,
@@ -16,6 +18,7 @@ import {
   type PoolState,
 } from "@quietodds/lib";
 import { getProver } from "@/lib/private";
+import { keccak256 } from "viem";
 import { DEPLOYMENT } from "@/lib/contract";
 
 export type ScanPhase = "idle" | "logs" | "decrypt" | "done" | "error";
@@ -33,6 +36,10 @@ interface PrivateAccount {
   keys: Keys | null;
   unlocking: boolean;
   unlock: () => Promise<void>;
+  /** A separate private account whose keys come from a passkey (WebAuthn PRF). */
+  unlockWithPasskey: () => Promise<void>;
+  /** How the current account was unlocked. */
+  method: "wallet" | "passkey" | null;
   lock: () => void;
   notes: OwnedNote[];
   tree: MerkleTree | null;
@@ -67,6 +74,7 @@ export function PrivateAccountProvider({ children }: { children: React.ReactNode
   const { signMessageAsync } = useSignMessage();
   const [keys, setKeys] = useState<Keys | null>(null);
   const [unlocking, setUnlocking] = useState(false);
+  const [method, setMethod] = useState<"wallet" | "passkey" | null>(null);
   const [notes, setNotes] = useState<OwnedNote[]>([]);
   const [tree, setTree] = useState<MerkleTree | null>(null);
   const [scan, setScan] = useState<ScanState>({ phase: "idle", progress: 0, detail: "" });
@@ -147,6 +155,7 @@ export function PrivateAccountProvider({ children }: { children: React.ReactNode
     setUnlocking(true);
     try {
       const k = keysFromSignature(await signMessageAsync({ message: KEY_MESSAGE }));
+      setMethod("wallet");
       setKeys(k);
       void runScan(k);
       // Load bb.js, the circuits and the proving setup while the user looks around.
@@ -155,6 +164,19 @@ export function PrivateAccountProvider({ children }: { children: React.ReactNode
       setUnlocking(false);
     }
   }, [signMessageAsync, runScan]);
+
+  const unlockWithPasskey = useCallback(async () => {
+    setUnlocking(true);
+    try {
+      const k = keysFromSpendingKey(await passkeySpendingKey());
+      setMethod("passkey");
+      setKeys(k);
+      void runScan(k);
+      void getProver().then((p) => p.warm()).catch(() => undefined);
+    } finally {
+      setUnlocking(false);
+    }
+  }, [runScan]);
 
   const lock = useCallback(() => {
     scanId.current++;
@@ -188,6 +210,70 @@ export function PrivateAccountProvider({ children }: { children: React.ReactNode
   const balances = { usdc: shieldedBalance(notes, ASSET.USDC), weth: shieldedBalance(notes, ASSET.WETH) };
 
   return (
-    <Ctx.Provider value={{ keys, unlocking, unlock, lock, notes, tree, scan, rescan, sync, reserveIndices, balances }}>{children}</Ctx.Provider>
+    <Ctx.Provider value={{ keys, unlocking, unlock, unlockWithPasskey, method, lock, notes, tree, scan, rescan, sync, reserveIndices, balances }}>{children}</Ctx.Provider>
   );
+}
+
+// --- passkeys (WebAuthn PRF) -------------------------------------------------
+
+const PASSKEY_ID = "quietodds:passkey-id";
+/** Fixed PRF input: the passkey turns it into the same 32 secret bytes every time. */
+const PRF_SALT = new TextEncoder().encode("quietodds:prf:v1");
+
+const b64 = (b: ArrayBuffer) => btoa(String.fromCharCode(...new Uint8Array(b)));
+const unb64 = (s: string) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
+
+type PrfResults = { prf?: { enabled?: boolean; results?: { first?: ArrayBuffer } } };
+
+/**
+ * The spending key from a passkey's PRF output. The secret never leaves the
+ * authenticator unhashed, syncs with the passkey (iCloud / Google), and needs
+ * no wallet. Creates the passkey on first use in this browser.
+ */
+async function passkeySpendingKey(): Promise<bigint> {
+  if (typeof window === "undefined" || !window.PublicKeyCredential) throw new Error("Passkeys aren't supported in this browser");
+  let id: string | null = null;
+  try {
+    id = localStorage.getItem(PASSKEY_ID);
+  } catch {
+    id = null;
+  }
+  const challenge = crypto.getRandomValues(new Uint8Array(32));
+  if (!id) {
+    const created = (await navigator.credentials.create({
+      publicKey: {
+        rp: { name: "QuietOdds" },
+        user: { id: crypto.getRandomValues(new Uint8Array(16)), name: "QuietOdds private account", displayName: "QuietOdds" },
+        challenge,
+        pubKeyCredParams: [
+          { type: "public-key", alg: -7 },
+          { type: "public-key", alg: -257 },
+        ],
+        authenticatorSelection: { residentKey: "required", userVerification: "required" },
+        extensions: { prf: {} } as AuthenticationExtensionsClientInputs,
+      },
+    })) as PublicKeyCredential | null;
+    if (!created) throw new Error("Passkey creation was cancelled");
+    if (!(created.getClientExtensionResults() as PrfResults).prf?.enabled) {
+      throw new Error("This passkey provider doesn't support the PRF extension (try Chrome or a recent Safari)");
+    }
+    id = b64(created.rawId);
+    try {
+      localStorage.setItem(PASSKEY_ID, id);
+    } catch {
+      // storage blocked: the browser will offer the passkey list next time
+    }
+  }
+  const got = (await navigator.credentials.get({
+    publicKey: {
+      challenge,
+      allowCredentials: [{ type: "public-key", id: unb64(id) }],
+      userVerification: "required",
+      extensions: { prf: { eval: { first: PRF_SALT } } } as AuthenticationExtensionsClientInputs,
+    },
+  })) as PublicKeyCredential | null;
+  const out = (got?.getClientExtensionResults() as PrfResults | undefined)?.prf?.results?.first;
+  if (!out) throw new Error("The passkey returned no PRF output");
+  const tagged = new Uint8Array([...new TextEncoder().encode("quietodds:passkey"), ...new Uint8Array(out)]);
+  return (BigInt(keccak256(tagged)) % (FIELD - 1n)) + 1n;
 }

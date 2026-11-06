@@ -57,9 +57,18 @@ export function UnlockPanel() {
         viewing key. They stay in this tab&apos;s memory and are gone when you close it; the same wallet always
         recovers the same notes, on any device.
       </p>
-      <button className="btn primary" onClick={() => void acct.unlock()} disabled={acct.unlocking}>
-        {acct.unlocking ? "Waiting for signature…" : "Sign to unlock"}
-      </button>
+      <div className="sides">
+        <button className="btn primary" onClick={() => void acct.unlock()} disabled={acct.unlocking}>
+          {acct.unlocking ? "Waiting…" : "Sign to unlock"}
+        </button>
+        <button className="btn" onClick={() => void acct.unlockWithPasskey().catch((e) => alert(e.message))} disabled={acct.unlocking}>
+          Use a passkey instead
+        </button>
+      </div>
+      <p className="hint">
+        A passkey gives a <b>separate</b> private account, derived from the passkey (WebAuthn PRF) instead of a wallet
+        signature. It syncs with your passkey provider; you still deposit and swap from any wallet.
+      </p>
     </section>
   );
 }

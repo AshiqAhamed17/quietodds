@@ -25,9 +25,14 @@ export function PrivateGate({ children, compact }: { children: React.ReactNode; 
             Sign once (no gas) to unlock your private account. Your keys stay in this tab&apos;s memory.
           </p>
         )}
-        <button className="btn primary" onClick={() => void acct.unlock()} disabled={acct.unlocking}>
-          {acct.unlocking ? "Waiting for signature…" : "Unlock private account"}
-        </button>
+        <div className="sides">
+          <button className="btn primary" onClick={() => void acct.unlock()} disabled={acct.unlocking}>
+            {acct.unlocking ? "Waiting…" : "Unlock private account"}
+          </button>
+          <button className="btn" onClick={() => void acct.unlockWithPasskey().catch((e) => alert(e.message))} disabled={acct.unlocking}>
+            Use a passkey
+          </button>
+        </div>
       </div>
     );
   }

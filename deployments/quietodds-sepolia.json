@@ -5,5 +5,14 @@
   "ResolverReceiver": "0x5d83961b7F18EB5AeB61eFef67A84591A3d52BAC",
   "ShieldedPool": "0xAC064dfd9713688dBDD90443C80c5161cdA20d95",
   "SpendVerifier": "0xae49c6b47AB8Aa5d82b0b5315cEfC2DC4A758382",
-  "deployBlock": 12074989
+  "deployBlock": 12074989,
+  "markets": {
+    "1": "[M4 replay] Liverpool vs Arsenal (resolved: Arsenal)",
+    "2": "ETH > $2,300 at 18:00 UTC Nov 6 (price)",
+    "3": "Nottingham Forest vs Manchester City, Nov 7 17:30 UTC (espn eng.1 401878757)",
+    "4": "Valencia vs Real Madrid, Nov 7 20:00 UTC (espn esp.1 401882808)",
+    "5": "PSG vs Troyes, Nov 7 20:05 UTC (espn fra.1 401876407)",
+    "6": "BTC > $76,000 at 18:00 UTC Nov 7 (price)",
+    "7": "ETH > $2,500 at 12:00 UTC Nov 20 (price)"
+  }
 }

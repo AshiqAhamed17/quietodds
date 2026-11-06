@@ -22,9 +22,15 @@ export async function fetchPoolState(
   client: PublicClient,
   pool: Address,
   fromBlock: bigint,
-  { chunk = 40_000n, toBlock }: { chunk?: bigint; toBlock?: bigint } = {},
+  {
+    chunk = 40_000n,
+    toBlock,
+    onProgress,
+  }: { chunk?: bigint; toBlock?: bigint; onProgress?: (scannedBlocks: bigint, totalBlocks: bigint) => void } = {},
 ): Promise<PoolState> {
   const end = toBlock ?? (await client.getBlockNumber({ cacheTime: 0 }));
+  const total = end >= fromBlock ? end - fromBlock + 1n : 0n;
+  onProgress?.(0n, total);
   const leaves: PoolLeaf[] = [];
   const nullifiers = new Set<bigint>();
   for (let start = fromBlock; start <= end; start += chunk) {
@@ -39,6 +45,7 @@ export async function fetchPoolState(
       leaves.push({ index: Number(l.args.index!), leaf: l.args.leaf!, ciphertext: l.args.ciphertext! });
     }
     for (const l of [...spends, ...redeems]) nullifiers.add(l.args.nullifierHash!);
+    onProgress?.(stop - fromBlock + 1n, total);
   }
   leaves.sort((a, b) => a.index - b.index);
   leaves.forEach((l, i) => {

@@ -3203,3 +3203,13 @@ footer {
 .anon-count { opacity: 0.65; font-size: 0.66rem; }
 @keyframes anon-pulse { 50% { opacity: 0.3; } }
 @media (max-width: 900px) { .anon-badge { font-size: 0; gap: 0; padding: 0.45rem; } }
+
+/* --- private account: unlock + scan --- */
+.panel.unlock { display: grid; gap: 0.9rem; justify-items: start; margin-top: 1.4rem; max-width: 640px; }
+.panel.unlock h2 { margin: 0; }
+.panel.scanbar { margin-top: 1.4rem; display: grid; gap: 0.6rem; }
+.scanbar-head { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; }
+.scanbar-actions { display: flex; gap: 0.5rem; }
+.scanbar-track { height: 6px; border-radius: 999px; background: rgba(255, 255, 255, 0.08); overflow: hidden; }
+.scanbar-fill { height: 100%; background: var(--yes, #8fe6cb); transition: width 0.3s ease; }
+main.page > .panel + .panel, main.page > .statrow + .panel { margin-top: 1.2rem; }

@@ -38,10 +38,12 @@ export async function scanNotes(
   keys: Keys,
   leaves: readonly PoolLeaf[],
   isSpent: (nullifierHash: bigint) => boolean,
+  onProgress?: (done: number, total: number) => void,
 ): Promise<OwnedNote[]> {
   const key = await viewingCryptoKey(keys.viewingKey);
   const owned: OwnedNote[] = [];
-  for (const l of leaves) {
+  for (const [i, l] of leaves.entries()) {
+    if (onProgress && i % 16 === 0) onProgress(i, leaves.length);
     if (l.ciphertext === "0x") continue;
     const data = await decryptNote(keys.viewingKey, l.ciphertext, key);
     if (!data) continue;
@@ -49,6 +51,7 @@ export async function scanNotes(
     if (noteLeaf(data, secrets.precommitment) !== l.leaf) continue;
     owned.push({ data, secrets, leafIndex: l.index, leaf: l.leaf, spent: isSpent(secrets.nullifierHash) });
   }
+  onProgress?.(leaves.length, leaves.length);
   return owned;
 }
 

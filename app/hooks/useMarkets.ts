@@ -4,7 +4,7 @@ import { useMemo } from "react";
 import { useReadContract, useReadContracts } from "wagmi";
 import { DEPLOYMENT, Source, Status, marketsAbi } from "@/lib/contract";
 
-export type MarketCategory = "Crypto" | "Sports";
+export type MarketCategory = "Crypto" | "Football" | "F1";
 
 /// One market as the UI sees it: Markets.getMarket + getSideTotals.
 export interface MarketView {
@@ -57,7 +57,7 @@ export function toView(id: bigint, m: RawMarket, totals: readonly bigint[] | und
     pot: m.pot,
     protocolFee: m.protocolFee,
     sideTotals: totals ? [...totals] : Array(m.numSides).fill(0n),
-    category: m.source === Source.Price ? "Crypto" : "Sports",
+    category: m.source === Source.Price ? "Crypto" : m.sourceRef.startsWith("espn:racing/") ? "F1" : "Football",
   };
 }
 

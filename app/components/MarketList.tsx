@@ -24,7 +24,8 @@ const FILTERS: { key: Filter; label: string }[] = [
 type Cat = "Trending" | MarketCategory;
 const CATEGORIES: { key: Cat; label: string }[] = [
   { key: "Trending", label: "Trending" },
-  { key: "Sports", label: "Sports" },
+  { key: "Football", label: "Football" },
+  { key: "F1", label: "F1" },
   { key: "Crypto", label: "Crypto" },
 ];
 
@@ -164,8 +165,11 @@ export function OddsBar({ m }: { m: MarketView }) {
   return (
     <div className="odds">
       {m.outcomes.map((o, i) => (
-        <div key={o} className="row">
-          <span>{o}</span>
+        <div key={o} className="odds-row">
+          <span className="odds-name">{o}</span>
+          <span className="odds-track" aria-hidden>
+            <span style={{ width: `${Math.max(odds[i] * 100, 2)}%` }} />
+          </span>
           <b className="mono">{Math.round(odds[i] * 100)}%</b>
         </div>
       ))}

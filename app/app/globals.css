@@ -3241,3 +3241,4 @@ main.page > .panel + .panel, main.page > .statrow + .panel { margin-top: 1.2rem;
 .bet-queue { margin-top: 1.2rem; display: grid; gap: 0.5rem; }
 .bet-queue h3 { margin: 0; font-size: 1rem; }
 .bet-queue .btn { padding: 0.15rem 0.5rem; font-size: 0.7rem; }
+.api-swap { display: grid; gap: 0.6rem; margin-top: 0.8rem; padding-top: 0.8rem; border-top: 1px dashed rgba(255, 255, 255, 0.12); }

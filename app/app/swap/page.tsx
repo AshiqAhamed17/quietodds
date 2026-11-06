@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { BetQueueList } from "@/components/BetQueue";
+import { ApiSwap } from "@/components/ApiSwap";
 import { betQueue } from "@/lib/betQueue";
 import { formatEther, formatUnits, parseUnits } from "viem";
 import { useAccount, usePublicClient, useWriteContract } from "wagmi";
@@ -278,6 +279,7 @@ function SwapForm() {
             {state.busy ? "Working…" : betOn ? "Swap, shield and queue bet" : shieldOn ? "Swap and shield" : "Swap"}
           </button>
           <ActionStatus state={state} steps={{ sync: "Building your private note", relay: "Confirm the swap in your wallet" }} />
+          {!shieldOn && <ApiSwap usdcIn={usdcIn} amountIn={amountIn} ourOut={receive} />}
         </div>
       </section>
 

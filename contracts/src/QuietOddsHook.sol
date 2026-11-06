@@ -8,6 +8,8 @@ import {TransientSlot} from "@openzeppelin/contracts/utils/TransientSlot.sol";
 import {BaseHook} from "@openzeppelin/uniswap-hooks/base/BaseHook.sol";
 import {IPoolManager} from "@uniswap/v4-core/src/interfaces/IPoolManager.sol";
 import {Hooks} from "@uniswap/v4-core/src/libraries/Hooks.sol";
+import {FullMath} from "@uniswap/v4-core/src/libraries/FullMath.sol";
+import {LPFeeLibrary} from "@uniswap/v4-core/src/libraries/LPFeeLibrary.sol";
 import {Pool} from "@uniswap/v4-core/src/libraries/Pool.sol";
 import {StateLibrary} from "@uniswap/v4-core/src/libraries/StateLibrary.sol";
 import {PoolKey} from "@uniswap/v4-core/src/types/PoolKey.sol";
@@ -15,7 +17,11 @@ import {PoolId} from "@uniswap/v4-core/src/types/PoolId.sol";
 import {Slot0} from "@uniswap/v4-core/src/types/Slot0.sol";
 import {Currency} from "@uniswap/v4-core/src/types/Currency.sol";
 import {BalanceDelta} from "@uniswap/v4-core/src/types/BalanceDelta.sol";
-import {BeforeSwapDelta, BeforeSwapDeltaLibrary, toBeforeSwapDelta} from "@uniswap/v4-core/src/types/BeforeSwapDelta.sol";
+import {
+    BeforeSwapDelta,
+    BeforeSwapDeltaLibrary,
+    toBeforeSwapDelta
+} from "@uniswap/v4-core/src/types/BeforeSwapDelta.sol";
 import {SwapParams} from "@uniswap/v4-core/src/types/PoolOperation.sol";
 import {ShieldedPool} from "./ShieldedPool.sol";
 
@@ -50,6 +56,14 @@ import {ShieldedPool} from "./ShieldedPool.sol";
 ///      OZ: the simulation uses the amount the pool really swaps (after the
 ///      shield's delta), and the skim shares the afterSwap delta with the shield.
 ///      Like OZ's, it protects one direction only: zero-for-one victims.
+///
+///   3. Directional dynamic fee (on pools created with the dynamic-fee flag),
+///      in the spirit of Uniswap's VolatilePair hook. A swap pays the base
+///      0.30% unless it reverses the price move made earlier in the same
+///      block: that is the back leg of a sandwich, so it pays the base fee plus
+///      the whole move since the block's first swap. A sandwich's gain is at
+///      most that move, so it can't profit in either direction; the extra fee
+///      goes to LPs. Ordinary swaps, and swaps that start a block, pay the base.
 contract QuietOddsHook is BaseHook {
     using SafeERC20 for IERC20;
     using SafeCast for *;
@@ -57,14 +71,26 @@ contract QuietOddsHook is BaseHook {
     using TransientSlot for *;
     using Pool for *;
 
-    /// The pool's state at the first swap of the block.
+    /// The pool's state at the first swap of the block. The guard advances
+    /// `state` through each one-for-zero swap it simulates, so the block's
+    /// starting price is kept separately for the directional fee.
     struct Checkpoint {
         uint48 blockNumber;
+        uint160 startSqrtPriceX96;
         Pool.State state;
     }
 
+    /// Base LP fee on dynamic-fee pools, in pips (0.30%).
+    uint24 public constant BASE_FEE = 3000;
+    /// Cap on a reversing swap's fee, in pips (50%).
+    uint24 public constant MAX_REVERSAL_FEE = 500_000;
+
     ShieldedPool public immutable shieldedPool;
     Currency public immutable usdc;
+    /// QuietOdds' private batch swaps always pay the base fee: two batches in
+    /// opposite directions may execute in one block, and a front-run before a
+    /// batch only hands the attacker's move to the batch's users.
+    address public immutable batchSwapper;
 
     mapping(PoolId id => Checkpoint) private _checkpoints;
 
@@ -83,6 +109,7 @@ contract QuietOddsHook is BaseHook {
         shieldedPool = shieldedPool_;
         IERC20 usdcToken = shieldedPool_.assets(shieldedPool_.ASSET_USDC());
         usdc = Currency.wrap(address(usdcToken));
+        batchSwapper = address(shieldedPool_.batches());
         usdcToken.forceApprove(address(shieldedPool_), type(uint256).max);
     }
 
@@ -107,7 +134,7 @@ contract QuietOddsHook is BaseHook {
 
     // --- swap callbacks ------------------------------------------------------
 
-    function _beforeSwap(address, PoolKey calldata key, SwapParams calldata params, bytes calldata hookData)
+    function _beforeSwap(address sender, PoolKey calldata key, SwapParams calldata params, bytes calldata hookData)
         internal
         override
         returns (bytes4, BeforeSwapDelta, uint24)
@@ -124,18 +151,27 @@ contract QuietOddsHook is BaseHook {
         // Guard: snapshot the pool at the block's first swap, then price
         // one-for-zero swaps against that snapshot.
         Checkpoint storage cp = _checkpoint(key);
+
+        // Directional fee: zero on static-fee pools (the pool's own fee applies).
+        uint24 feeOverride;
+        if (LPFeeLibrary.isDynamicFee(key.fee)) {
+            uint24 fee = sender == batchSwapper ? BASE_FEE : directionalFee(key, params.zeroForOne);
+            feeOverride = fee | LPFeeLibrary.OVERRIDE_FEE_FLAG;
+        }
+
         if (params.zeroForOne) {
             APPLY_SLOT.asBoolean().tstore(false);
         } else {
-            (BalanceDelta simulated,,,) = cp.state.swap(
-                Pool.SwapParams({
-                    tickSpacing: key.tickSpacing,
-                    zeroForOne: false,
-                    amountSpecified: params.amountSpecified + specifiedDelta,
-                    sqrtPriceLimitX96: params.sqrtPriceLimitX96,
-                    lpFeeOverride: 0
-                })
-            );
+            (BalanceDelta simulated,,,) = cp.state
+                .swap(
+                    Pool.SwapParams({
+                        tickSpacing: key.tickSpacing,
+                        zeroForOne: false,
+                        amountSpecified: params.amountSpecified + specifiedDelta,
+                        sqrtPriceLimitX96: params.sqrtPriceLimitX96,
+                        lpFeeOverride: feeOverride // the target pays the same fee as the swap
+                    })
+                );
             int128 target = params.amountSpecified < 0 ? simulated.amount0() : simulated.amount1();
             TARGET_SLOT.asUint256().tstore(uint256(int256(target < 0 ? -target : target)));
             APPLY_SLOT.asBoolean().tstore(true);
@@ -143,7 +179,7 @@ contract QuietOddsHook is BaseHook {
 
         BeforeSwapDelta delta =
             specifiedDelta == 0 ? BeforeSwapDeltaLibrary.ZERO_DELTA : toBeforeSwapDelta(specifiedDelta, 0);
-        return (this.beforeSwap.selector, delta, 0);
+        return (this.beforeSwap.selector, delta, feeOverride);
     }
 
     function _afterSwap(
@@ -159,6 +195,30 @@ contract QuietOddsHook is BaseHook {
         if (hookData.length != 0) shieldUnspecified = _shield(key, params, delta, hookData, skim);
 
         return (this.afterSwap.selector, (shieldUnspecified + skim).toInt256().toInt128());
+    }
+
+    // --- directional fee -----------------------------------------------------
+
+    /// @notice The LP fee (pips) a swap in this direction pays right now on a
+    ///         dynamic-fee pool: the base fee, plus, if it pushes the price back
+    ///         toward where the block started, the relative size of the move.
+    function directionalFee(PoolKey calldata key, bool zeroForOne) public view returns (uint24) {
+        Checkpoint storage cp = _checkpoints[key.toId()];
+        if (cp.blockNumber != uint48(block.number)) return BASE_FEE; // first swap of the block
+        uint256 start = cp.startSqrtPriceX96;
+        (uint160 sqrtNow,,,) = poolManager.getSlot0(key.toId());
+        uint256 cur = sqrtNow;
+
+        // zero-for-one pushes the price down, so it reverses an upward move, and vice versa.
+        bool reverses = zeroForOne ? cur > start : cur < start;
+        if (!reverses) return BASE_FEE;
+
+        // The move, relative to the lower of the two prices (the larger ratio).
+        uint256 ratio = FullMath.mulDiv(FullMath.mulDiv(cur, 1e6, start), cur, start); // (cur/start)^2 in pips
+        if (ratio == 0) return MAX_REVERSAL_FEE; // the price fell more than 1e6-fold
+        uint256 move = ratio > 1e6 ? ratio - 1e6 : FullMath.mulDiv(1e6 - ratio, 1e6, ratio);
+        uint256 fee = BASE_FEE + move;
+        return fee > MAX_REVERSAL_FEE ? MAX_REVERSAL_FEE : uint24(fee);
     }
 
     // --- anti-sandwich -------------------------------------------------------
@@ -178,6 +238,7 @@ contract QuietOddsHook is BaseHook {
         if (cp.blockNumber == blockNumber) return cp;
         cp.blockNumber = blockNumber;
         cp.state.slot0 = Slot0.wrap(poolManager.extsload(StateLibrary._getPoolStateSlot(id)));
+        cp.startSqrtPriceX96 = cp.state.slot0.sqrtPriceX96();
         cp.state.liquidity = poolManager.getLiquidity(id);
     }
 

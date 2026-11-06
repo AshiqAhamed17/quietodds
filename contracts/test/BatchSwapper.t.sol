@@ -9,6 +9,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol";
 import {IHooks} from "@uniswap/v4-core/src/interfaces/IHooks.sol";
 import {Hooks} from "@uniswap/v4-core/src/libraries/Hooks.sol";
+import {LPFeeLibrary} from "@uniswap/v4-core/src/libraries/LPFeeLibrary.sol";
 import {PoolKey} from "@uniswap/v4-core/src/types/PoolKey.sol";
 import {Currency} from "@uniswap/v4-core/src/types/Currency.sol";
 import {ModifyLiquidityParams} from "@uniswap/v4-core/src/types/PoolOperation.sol";
@@ -76,8 +77,13 @@ contract BatchSwapperTest is Deployers {
         address hookAddr = address(FLAGS | (uint160(7) << 144));
         deployCodeTo("QuietOddsHook.sol:QuietOddsHook", abi.encode(manager, pool), hookAddr);
         uint160 sqrtPrice = uint160(Math.sqrt((uint256(ETH_USD) << 192) / 1e20));
-        (poolKey,) =
-            initPool(Currency.wrap(address(0)), Currency.wrap(address(usdc)), IHooks(hookAddr), 3000, sqrtPrice);
+        (poolKey,) = initPool(
+            Currency.wrap(address(0)),
+            Currency.wrap(address(usdc)),
+            IHooks(hookAddr),
+            LPFeeLibrary.DYNAMIC_FEE_FLAG,
+            sqrtPrice
+        );
         usdc.mint(address(this), 1e12);
         usdc.approve(address(modifyLiquidityRouter), type(uint256).max);
         usdc.approve(address(swapRouter), type(uint256).max);
@@ -444,7 +450,9 @@ contract BatchSwapperTest is Deployers {
         return (p, a.fee);
     }
 
-    /// Both batches execute in one block, as in the fixture story.
+    /// Both batches execute in one block, as in the fixture story. The second
+    /// reverses the first one's move but still pays the base fee (the hook
+    /// exempts the BatchSwapper from the directional fee).
     function _executeBoth() internal returns (uint256 out1, uint256 out2) {
         _joinAll();
         _ready();
@@ -453,6 +461,17 @@ contract BatchSwapperTest is Deployers {
         // The redeem fixtures were proven against these exact outputs.
         assertEq(out1, vm.parseJsonUint(story, ".batch1Out"), "regenerate: node scripts/gen-fixtures.mjs batch");
         assertEq(out2, vm.parseJsonUint(story, ".batch2Out"), "regenerate: node scripts/gen-fixtures.mjs batch");
+    }
+
+    function test_secondBatchInABlockPaysTheBaseFee() public {
+        _joinAll();
+        _ready();
+        batches.executeBatch(USDC_TO_WETH_BATCH);
+        // Anyone else reversing batch 1's move now would pay the directional fee...
+        QuietOddsHook hook = QuietOddsHook(address(poolKey.hooks));
+        assertGt(hook.directionalFee(poolKey, true), hook.BASE_FEE());
+        // ...but batch 2 gets the plain-swap output the fixtures were proven for.
+        assertEq(batches.executeBatch(WETH_TO_USDC_BATCH), vm.parseJsonUint(story, ".batch2Out"));
     }
 
     function test_ticketsRedeemTheirProRataShare() public {

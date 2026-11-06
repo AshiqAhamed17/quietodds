@@ -5,6 +5,7 @@ import {Script} from "forge-std/Script.sol";
 import {IHooks} from "@uniswap/v4-core/src/interfaces/IHooks.sol";
 import {Currency} from "@uniswap/v4-core/src/types/Currency.sol";
 import {PoolKey} from "@uniswap/v4-core/src/types/PoolKey.sol";
+import {LPFeeLibrary} from "@uniswap/v4-core/src/libraries/LPFeeLibrary.sol";
 
 /// Shared Sepolia addresses and the QuietOdds ETH/USDC pool key.
 /// Verified in deployments/sepolia.json.
@@ -15,7 +16,8 @@ abstract contract HookConfig is Script {
     address constant USDC = 0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238;
     address constant ETH_USD_FEED = 0x694AA1769357215DE4FAC081bf1f309aDC325306;
 
-    uint24 constant FEE = 3000;
+    /// Dynamic: the hook charges 0.30%, or more for a swap that reverses the block's move.
+    uint24 constant FEE = LPFeeLibrary.DYNAMIC_FEE_FLAG;
     int24 constant TICK_SPACING = 60;
 
     string constant CORE_JSON = "../deployments/quietodds-sepolia.json";

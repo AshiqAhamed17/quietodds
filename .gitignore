@@ -26,3 +26,6 @@ relayer/.vercel/
 
 # Personal study notes (Lean / formal verification)
 learn/
+
+# Lean build artifacts (Mathlib cache etc.)
+lean/.lake/

@@ -3502,3 +3502,40 @@ main.page > .panel + .panel, main.page > .statrow + .panel { margin-top: 1.2rem;
 }
 .pf-empty a { color: var(--yes); }
 .pf-scan .hint { font-size: 0.78rem; }
+
+/* ---- tokens: logos, picker, amount input ---- */
+.token-icon { display: inline-block; flex: none; border-radius: 50%; vertical-align: middle; }
+.token { display: inline-flex; align-items: center; gap: 0.4rem; white-space: nowrap; }
+.btn .token-icon { width: 18px; height: 18px; }
+.token-picker { display: grid; grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr)); gap: 0.5rem; }
+.token-option {
+  display: flex; align-items: center; gap: 0.7rem; padding: 0.7rem 0.85rem; text-align: left;
+  border: 1px solid var(--line-2); border-radius: var(--r-sm); background: rgba(255, 255, 255, 0.02);
+  color: var(--fg); font: inherit; cursor: pointer; transition: border-color 0.2s ease, background 0.2s ease;
+}
+.token-option:hover { border-color: rgba(255, 255, 255, 0.24); }
+.token-option.on { border-color: rgba(143, 230, 203, 0.5); background: rgba(143, 230, 203, 0.06); }
+.token-option:focus-visible { outline: 2px solid var(--yes); outline-offset: 2px; }
+.token-option-text { display: grid; gap: 0.1rem; min-width: 0; }
+.token-option-symbol { font-weight: 500; font-size: 0.95rem; }
+.token-option-detail { font-size: 0.75rem; color: var(--fg-3); font-variant-numeric: tabular-nums; }
+.amount-input {
+  display: flex; align-items: center; gap: 0.5rem; padding-right: 0.75rem;
+  background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 10px;
+}
+.amount-input:focus-within { border-color: rgba(143, 230, 203, 0.5); }
+.form .amount-input input { flex: 1; min-width: 0; border: 0; background: transparent; outline: none; font-size: 1.05rem; font-variant-numeric: tabular-nums; }
+.amount-input .token { font-size: 0.88rem; color: var(--fg); }
+.input-row .amount-input { flex: 1; min-width: 0; }
+.pair { display: inline-flex; margin-right: 0.55rem; vertical-align: -0.3em; }
+.pair .token-icon + .token-icon { margin-left: -9px; box-shadow: 0 0 0 2px var(--panel-2); }
+.pf-usdc { display: inline-flex; align-items: center; gap: 0.6rem; }
+.pf-weth { display: inline-flex; align-items: center; gap: 0.45rem; }
+
+/* ---- per-outcome odds (cards with 2–4 sides) ---- */
+.odds { display: grid; gap: 0.45rem; margin-top: 0.9rem; }
+.odds-row { display: grid; grid-template-columns: minmax(0, 1fr) 4.5rem 2.6rem; align-items: center; gap: 0.7rem; font-size: 0.84rem; }
+.odds-name { color: var(--fg-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.odds-track { height: 4px; border-radius: 999px; background: rgba(255, 255, 255, 0.08); overflow: hidden; }
+.odds-track span { display: block; height: 100%; border-radius: inherit; background: var(--yes); opacity: 0.75; }
+.odds-row b { text-align: right; color: var(--fg); font-weight: 500; font-variant-numeric: tabular-nums; }

@@ -12,6 +12,7 @@ import { RedeemRow } from "@/components/RedeemRow";
 import { BetQueueList } from "@/components/BetQueue";
 import { useState } from "react";
 import { explorerTx } from "@/lib/contract";
+import { Token, TokenIcon, type TokenSymbol } from "@/components/Token";
 
 export default function PortfolioPage() {
   const { isConnected } = useAccount();
@@ -93,8 +94,14 @@ function Holdings() {
         <div className="pf-hero-top">
           <div className="pf-balance">
             <span className="pf-caption">Private balance</span>
-            <span className="pf-usdc">{ready ? usdc(balances.usdc) : "…"}</span>
-            <span className="pf-weth mono">{ready ? weth(balances.weth) : "\u00a0"}</span>
+            <span className="pf-usdc">
+              <TokenIcon symbol="USDC" size={34} />
+              {ready ? usdc(balances.usdc) : "…"}
+            </span>
+            <span className="pf-weth mono">
+              <TokenIcon symbol="WETH" size={18} />
+              {ready ? weth(balances.weth) : "\u00a0"}
+            </span>
           </div>
           <div className="pf-account">
             <span className={`pf-state ${scan.phase}`}>
@@ -198,7 +205,7 @@ function Holdings() {
 }
 
 /// One asset's notes as a bar split in proportion to each note's amount.
-function NoteStack({ label, notes, asset, show }: { label: string; notes: OwnedNote[]; asset: bigint; show: (v: bigint) => string }) {
+function NoteStack({ label, notes, asset, show }: { label: TokenSymbol; notes: OwnedNote[]; asset: bigint; show: (v: bigint) => string }) {
   const list = spendableNotes(notes, asset);
   const amounts = list.map((n) => (n.data.kind === "balance" ? n.data.amount : 0n));
   const total = amounts.reduce((a, b) => a + b, 0n);
@@ -206,7 +213,7 @@ function NoteStack({ label, notes, asset, show }: { label: string; notes: OwnedN
     return (
       <div className="note-stack empty">
         <div className="pf-head">
-          <span className="note-stack-label">{label}</span>
+          <span className="note-stack-label"><Token symbol={label} /></span>
           <span className="mono muted">no notes</span>
         </div>
       </div>
@@ -214,7 +221,7 @@ function NoteStack({ label, notes, asset, show }: { label: string; notes: OwnedN
   return (
     <div className="note-stack">
       <div className="pf-head">
-        <span className="note-stack-label">{label}</span>
+        <span className="note-stack-label"><Token symbol={label} /></span>
         <span className="mono muted">
           {list.length} {list.length === 1 ? "note" : "notes"}
         </span>

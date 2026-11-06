@@ -15,6 +15,7 @@ import { RedeemRow } from "@/components/RedeemRow";
 import { DEPLOYMENT, batchSwapperAbi, explorerAddress } from "@/lib/contract";
 import { relayedSpend } from "@/lib/private";
 import { useRelayFee } from "@/hooks/useRelayFee";
+import { AmountInput, TokenIcon } from "@/components/Token";
 
 const DIRECTIONS = [
   { dir: 0, label: "USDC → WETH", asset: ASSET.USDC, inSym: "USDC", outSym: "WETH", inDec: 6, outDec: 18, def: "1", min: 1_000_000n },
@@ -163,7 +164,11 @@ function BatchCard({ d }: { d: (typeof DIRECTIONS)[number] }) {
   return (
     <section className="panel">
       <h2>
-        {d.label} <span className="muted mono">#{id?.toString() ?? "…"}</span>
+        <span className="pair">
+          <TokenIcon symbol={d.inSym} size={26} />
+          <TokenIcon symbol={d.outSym} size={26} />
+        </span>
+        {d.inSym} → {d.outSym} <span className="muted mono">#{id?.toString() ?? "…"}</span>
       </h2>
       <div className="detail-metrics">
         <div className="kv">
@@ -196,9 +201,9 @@ function BatchCard({ d }: { d: (typeof DIRECTIONS)[number] }) {
       <PrivateGate compact>
         <div className="form" style={{ marginTop: "0.9rem" }}>
           <label>
-            Join with ({d.inSym})
+            Join with
             <span className="input-row">
-              <input inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} disabled={tooSmall} />
+              <AmountInput symbol={d.inSym} value={amount} onChange={setAmount} disabled={tooSmall} />
               {acct.scan.phase === "done" && maxJoin >= d.min && (
                 <button type="button" className="btn ghost" onClick={() => setAmount(formatUnits(maxJoin, d.inDec))}>
                   Max

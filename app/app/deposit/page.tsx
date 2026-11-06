@@ -10,6 +10,7 @@ import { PrivateGate } from "@/components/PrivateGate";
 import { usePrivateAccount } from "@/components/PrivateAccount";
 import { DEPLOYMENT, erc20Abi, explorerAddress, shieldedPoolAbi } from "@/lib/contract";
 import { relayedSpend } from "@/lib/private";
+import { AmountInput, TokenPicker } from "@/components/Token";
 
 const ASSETS = [
   { id: ASSET.USDC, label: "USDC", decimals: 6, token: DEPLOYMENT.usdc },
@@ -105,16 +106,14 @@ function Deposit() {
     <section className="panel">
       <h2>Deposit</h2>
       <div className="form">
-        <div className="sides">
-          {ASSETS.map((x, i) => (
-            <button key={x.label} className={`btn ${asset === i ? "on" : ""}`} onClick={() => setAsset(i)}>
-              {x.label}
-            </button>
-          ))}
-        </div>
+        <TokenPicker
+          options={ASSETS.map((x, i) => ({ symbol: x.label, detail: `wallet ${fmt((wallet?.[i]?.result as bigint | undefined) ?? 0n, x.decimals)}` }))}
+          value={a.label}
+          onChange={(sym) => setAsset(ASSETS.findIndex((x) => x.label === sym))}
+        />
         <label>
-          Amount · wallet {fmt(balance, a.decimals)} {a.label}
-          <input inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} />
+          Amount
+          <AmountInput symbol={a.label} value={amount} onChange={setAmount} />
         </label>
         <button className="btn primary" onClick={() => void deposit()} disabled={state.busy}>
           {state.busy ? "Working…" : `Deposit ${amount || 0} ${a.label}`}
@@ -144,7 +143,6 @@ function Withdraw() {
   const [to, setTo] = useState("");
   const { state, run } = useAction();
   const a = ASSETS[asset];
-  const priv = asset === 0 ? acct.balances.usdc : acct.balances.weth;
 
   const withdraw = () =>
     run(async (onStep) => {
@@ -163,16 +161,14 @@ function Withdraw() {
     <section className="panel" id="withdraw">
       <h2>Withdraw privately</h2>
       <div className="form">
-        <div className="sides">
-          {ASSETS.map((x, i) => (
-            <button key={x.label} className={`btn ${asset === i ? "on" : ""}`} onClick={() => setAsset(i)}>
-              {x.label}
-            </button>
-          ))}
-        </div>
+        <TokenPicker
+          options={ASSETS.map((x) => ({ symbol: x.label, detail: `private ${fmt(x.id === ASSET.USDC ? acct.balances.usdc : acct.balances.weth, x.decimals)}` }))}
+          value={a.label}
+          onChange={(sym) => setAsset(ASSETS.findIndex((x) => x.label === sym))}
+        />
         <label>
-          Amount (empty = whole largest note) · private {fmt(priv, a.decimals)} {a.label}
-          <input inputMode="decimal" value={amount} placeholder="max" onChange={(e) => setAmount(e.target.value)} />
+          Amount (leave empty for your whole biggest note)
+          <AmountInput symbol={a.label} value={amount} placeholder="max" onChange={setAmount} />
         </label>
         <label>
           To address (use a fresh one)

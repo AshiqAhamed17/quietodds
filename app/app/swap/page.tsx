@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { BetQueueList } from "@/components/BetQueue";
 import { Switch } from "@/components/Switch";
+import { AmountInput, TokenIcon } from "@/components/Token";
 import { ApiSwap } from "@/components/ApiSwap";
 import { betQueue } from "@/lib/betQueue";
 import { formatEther, formatUnits, parseUnits } from "viem";
@@ -200,15 +201,15 @@ function SwapForm() {
         <div className="form">
           <div className="sides">
             <button className={`btn ${usdcIn ? "on" : ""}`} onClick={() => { setUsdcIn(true); setAmount("3"); }}>
-              USDC → ETH
+              <TokenIcon symbol="USDC" /> USDC → <TokenIcon symbol="ETH" /> ETH
             </button>
             <button className={`btn ${!usdcIn ? "on" : ""}`} onClick={() => { setUsdcIn(false); setAmount("0.002"); }}>
-              ETH → USDC
+              <TokenIcon symbol="ETH" /> ETH → <TokenIcon symbol="USDC" /> USDC
             </button>
           </div>
           <label>
-            You pay ({usdcIn ? "USDC" : "ETH"})
-            <input inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} />
+            You pay
+            <AmountInput symbol={usdcIn ? "USDC" : "ETH"} value={amount} onChange={setAmount} />
           </label>
 
           <Switch
@@ -219,8 +220,8 @@ function SwapForm() {
           />
           {shieldOn && (
             <label>
-              Shield amount (USDC) · {usdcIn ? "taken from what you pay" : "taken from the USDC you receive"}
-              <input inputMode="decimal" value={shield} onChange={(e) => setShield(e.target.value)} />
+              Shield amount · {usdcIn ? "taken from what you pay" : "taken from the USDC you receive"}
+              <AmountInput symbol="USDC" value={shield} onChange={setShield} />
             </label>
           )}
 

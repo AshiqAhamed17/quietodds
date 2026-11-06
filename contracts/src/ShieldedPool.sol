@@ -192,9 +192,11 @@ contract ShieldedPool is PoseidonMerkleTree, ReentrancyGuard {
 
     // --- redeem --------------------------------------------------------------
 
-    /// @notice Turns a winning (or refunded) position into a hidden balance
-    ///         note. The payout ratio comes from Markets, never from the caller,
-    ///         so a losing position cannot produce a valid proof.
+    /// @notice Turns a winning (or refunded) position, or an executed batch
+    ///         ticket, into a hidden balance note. The payout ratio comes from
+    ///         Markets or BatchSwapper, never from the caller, so a losing
+    ///         position cannot produce a valid proof and a ticket can only claim
+    ///         its pro-rata share: floor(amountIn * amountOut / totalIn).
     function redeem(RedeemArgs calldata a, bytes calldata proof, bytes calldata outCiphertext) external nonReentrant {
         _checkNullifier(a.root, a.nullifierHash, a.relayer);
         if (a.fee > MAX_AMOUNT) revert BadAmount();
@@ -209,6 +211,10 @@ contract ShieldedPool is PoseidonMerkleTree, ReentrancyGuard {
             (num, den, side, anySide) = markets.redeemTerms(a.id);
             requiredSide = side;
             assetOut = ASSET_USDC;
+        } else if (a.kind == TAG_TICKET) {
+            // Tickets carry no side; the circuit skips the side rule for them.
+            (num, den, assetOut) = batches.redeemTerms(a.id);
+            anySide = true;
         } else {
             revert BadKind();
         }
@@ -241,6 +247,15 @@ contract ShieldedPool is PoseidonMerkleTree, ReentrancyGuard {
     function releaseToBatches(uint256 asset, uint256 amount) external nonReentrant {
         if (msg.sender != address(batches)) revert NotBatches();
         _token(asset).safeTransfer(msg.sender, amount);
+    }
+
+    /// @notice Hands the markets' accrued 1% protocol fee (USDC that sits here,
+    ///         set aside from resolved pots) to the BatchSwapper, which donates
+    ///         it to the v4 pool's LPs.
+    function releaseFees() external nonReentrant returns (uint256 amount) {
+        if (msg.sender != address(batches)) revert NotBatches();
+        amount = markets.takeFees();
+        if (amount > 0) assets[ASSET_USDC].safeTransfer(msg.sender, amount);
     }
 
     // --- internals -----------------------------------------------------------

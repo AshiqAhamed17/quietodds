@@ -398,6 +398,19 @@ export const shieldedPoolAbi = [
   },
   {
     "type": "function",
+    "name": "releaseFees",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "amount",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
     "name": "releaseToBatches",
     "inputs": [
       {
@@ -2030,6 +2043,19 @@ export const batchSwapperAbi = [
   },
   {
     "type": "function",
+    "name": "donateFees",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "amount",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
     "name": "ethUsdFeed",
     "inputs": [],
     "outputs": [
@@ -2513,6 +2539,19 @@ export const batchSwapperAbi = [
   },
   {
     "type": "event",
+    "name": "FeesDonated",
+    "inputs": [
+      {
+        "name": "amount",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
     "name": "OwnershipTransferred",
     "inputs": [
       {
@@ -2660,6 +2699,11 @@ export const batchSwapperAbi = [
   {
     "type": "error",
     "name": "JoinTooSmall",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "NoFees",
     "inputs": []
   },
   {

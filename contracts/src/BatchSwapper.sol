@@ -31,6 +31,10 @@ interface IWETH {
 ///
 ///         On-chain, a join only shows "someone added X to batch N". Who
 ///         swapped, and who got what out, stays hidden.
+///
+///         It is also where the prediction market pays the pool: `donateFees`
+///         takes the markets' 1% protocol fee and donates it to the pool's
+///         in-range LPs with `poolManager.donate`.
 /// @dev    The pool's ETH side may be native ETH (our Sepolia pool) or WETH;
 ///         private balances always hold WETH, so native ETH is wrapped and
 ///         unwrapped here. The tokens live in ShieldedPool until execution.
@@ -54,6 +58,10 @@ contract BatchSwapper is IUnlockCallback, Ownable, ReentrancyGuard {
 
     uint8 public constant USDC_TO_WETH = 0;
     uint8 public constant WETH_TO_USDC = 1;
+
+    // What an unlock does.
+    uint8 internal constant OP_SWAP = 0;
+    uint8 internal constant OP_DONATE = 1;
 
     uint256 public constant BATCH_INTERVAL = 5 minutes;
     /// After this long past the first join with no execution, the owner may cancel (refund).
@@ -89,6 +97,7 @@ contract BatchSwapper is IUnlockCallback, Ownable, ReentrancyGuard {
     event PoolSet(address pool);
     event PoolKeySet(PoolKey key);
     event SlippageSet(uint256 bps);
+    event FeesDonated(uint256 amount);
 
     error NotPool();
     error NotPoolManager();
@@ -108,6 +117,7 @@ contract BatchSwapper is IUnlockCallback, Ownable, ReentrancyGuard {
     error StalePrice();
     error BadSlippage();
     error NotFinal();
+    error NoFees();
 
     modifier onlyPool() {
         if (msg.sender != address(pool)) revert NotPool();
@@ -192,7 +202,7 @@ contract BatchSwapper is IUnlockCallback, Ownable, ReentrancyGuard {
 
         // Pull the batch's input from the ShieldedPool, run the swap, send the output back.
         pool.releaseToBatches(_assetIn(direction), totalIn);
-        amountOut = abi.decode(poolManager.unlock(abi.encode(direction, totalIn)), (uint256));
+        amountOut = abi.decode(poolManager.unlock(abi.encode(OP_SWAP, direction, totalIn)), (uint256));
         if (amountOut < minOut) revert InsufficientOutput(amountOut, minOut);
         if (amountOut > MAX_TOTAL) revert BatchTooLarge();
         (direction == USDC_TO_WETH ? weth : usdc).safeTransfer(address(pool), amountOut);
@@ -203,11 +213,31 @@ contract BatchSwapper is IUnlockCallback, Ownable, ReentrancyGuard {
         _open(direction);
     }
 
-    /// @dev One exact-in swap with no hookData (a plain swap for the hook, so
-    ///      the anti-sandwich guard still applies). Settles the input, takes the output.
+    // --- LP donation -----------------------------------------------------------
+
+    /// @notice Donates the markets' accrued protocol fees (USDC) to the pool's
+    ///         in-range LPs. Permissionless; the CRE workflow calls it after
+    ///         resolving markets. Bets make the Uniswap pool earn.
+    function donateFees() external nonReentrant returns (uint256 amount) {
+        if (poolKey.tickSpacing == 0) revert PoolKeyNotSet();
+        amount = pool.releaseFees();
+        if (amount == 0) revert NoFees();
+        poolManager.unlock(abi.encode(OP_DONATE, uint8(0), amount));
+        emit FeesDonated(amount);
+    }
+
+    // --- unlock callback -------------------------------------------------------
+
     function unlockCallback(bytes calldata data) external returns (bytes memory) {
         if (msg.sender != address(poolManager)) revert NotPoolManager();
-        (uint8 direction, uint256 amountIn) = abi.decode(data, (uint8, uint256));
+        (uint8 op, uint8 direction, uint256 amount) = abi.decode(data, (uint8, uint8, uint256));
+        if (op == OP_DONATE) return _donate(amount);
+        return _swap(direction, amount);
+    }
+
+    /// @dev One exact-in swap with no hookData (a plain swap for the hook, so
+    ///      the anti-sandwich guard still applies). Settles the input, takes the output.
+    function _swap(uint8 direction, uint256 amountIn) internal returns (bytes memory) {
         PoolKey memory key = poolKey;
 
         Currency cIn = direction == USDC_TO_WETH ? Currency.wrap(address(usdc)) : _ethCurrency(key);
@@ -232,6 +262,15 @@ contract BatchSwapper is IUnlockCallback, Ownable, ReentrancyGuard {
         poolManager.take(cOut, address(this), amountOut);
         if (cOut.isAddressZero()) IWETH(address(weth)).deposit{value: amountOut}();
         return abi.encode(amountOut);
+    }
+
+    /// @dev Donates `amount` USDC to the pool and pays for it.
+    function _donate(uint256 amount) internal returns (bytes memory) {
+        PoolKey memory key = poolKey;
+        bool usdcIs0 = Currency.unwrap(key.currency0) == address(usdc);
+        poolManager.donate(key, usdcIs0 ? amount : 0, usdcIs0 ? 0 : amount, "");
+        _settle(Currency.wrap(address(usdc)), amount);
+        return "";
     }
 
     // --- refund --------------------------------------------------------------

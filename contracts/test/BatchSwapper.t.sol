@@ -13,6 +13,10 @@ import {PoolKey} from "@uniswap/v4-core/src/types/PoolKey.sol";
 import {Currency} from "@uniswap/v4-core/src/types/Currency.sol";
 import {ModifyLiquidityParams} from "@uniswap/v4-core/src/types/PoolOperation.sol";
 import {PoseidonT5} from "poseidon-solidity/PoseidonT5.sol";
+import {FullMath} from "@uniswap/v4-core/src/libraries/FullMath.sol";
+import {FixedPoint128} from "@uniswap/v4-core/src/libraries/FixedPoint128.sol";
+import {StateLibrary} from "@uniswap/v4-core/src/libraries/StateLibrary.sol";
+import {IPoolManager} from "@uniswap/v4-core/src/interfaces/IPoolManager.sol";
 import {ShieldedPool} from "../src/ShieldedPool.sol";
 import {BatchSwapper} from "../src/BatchSwapper.sol";
 import {Markets} from "../src/Markets.sol";
@@ -24,6 +28,7 @@ import {MockFeed} from "./mocks/MockFeed.sol";
 /// scripts/gen-fixtures.mjs), then one swap through a real v4 PoolManager and
 /// the QuietOdds hook, on a native-ETH/USDC pool like the Sepolia one.
 contract BatchSwapperTest is Deployers {
+    using StateLibrary for IPoolManager;
     uint160 constant FLAGS = uint160(
         Hooks.BEFORE_SWAP_FLAG | Hooks.AFTER_SWAP_FLAG | Hooks.BEFORE_SWAP_RETURNS_DELTA_FLAG
             | Hooks.AFTER_SWAP_RETURNS_DELTA_FLAG
@@ -34,6 +39,7 @@ contract BatchSwapperTest is Deployers {
 
     ShieldedPool pool;
     BatchSwapper batches;
+    Markets markets;
     MockERC20 usdc;
     WETH weth;
     MockFeed feed;
@@ -49,7 +55,7 @@ contract BatchSwapperTest is Deployers {
         feed = new MockFeed();
         feed.set(ETH_USD, block.timestamp);
 
-        Markets markets = new Markets(address(this));
+        markets = new Markets(address(this));
         batches = new BatchSwapper(
             address(this), manager, AggregatorV3Interface(address(feed)), IERC20(address(usdc)), IERC20(address(weth))
         );
@@ -406,6 +412,170 @@ contract BatchSwapperTest is Deployers {
 
     function test_unlockCallbackOnlyFromPoolManager() public {
         vm.expectRevert(BatchSwapper.NotPoolManager.selector);
-        batches.unlockCallback(abi.encode(uint8(0), uint256(1e6)));
+        batches.unlockCallback(abi.encode(uint8(0), uint8(0), uint256(1e6)));
+    }
+
+    // --- 5.3 redeem tickets ----------------------------------------------------
+
+    function _redeemFixture(string memory name)
+        internal
+        view
+        returns (bytes memory proof, ShieldedPool.RedeemArgs memory a, uint256 payout)
+    {
+        string memory json = vm.readFile(string.concat("test/fixtures/", name, ".json"));
+        proof = vm.parseJsonBytes(json, ".proof");
+        bytes32[] memory pi = vm.parseJsonBytes32Array(json, ".publicInputs");
+        a = ShieldedPool.RedeemArgs(
+            uint256(pi[0]),
+            uint256(pi[1]),
+            uint256(pi[2]),
+            uint256(pi[3]),
+            uint256(pi[9]),
+            address(uint160(uint256(pi[10]))),
+            uint256(pi[11])
+        );
+        payout = vm.parseJsonUint(json, ".ctx.payout");
+    }
+
+    function _redeem(string memory name) internal returns (uint256 payout, uint256 fee) {
+        (bytes memory proof, ShieldedPool.RedeemArgs memory a, uint256 p) = _redeemFixture(name);
+        vm.prank(relayer);
+        pool.redeem(a, proof, hex"7d");
+        return (p, a.fee);
+    }
+
+    /// Both batches execute in one block, as in the fixture story.
+    function _executeBoth() internal returns (uint256 out1, uint256 out2) {
+        _joinAll();
+        _ready();
+        out1 = batches.executeBatch(USDC_TO_WETH_BATCH);
+        out2 = batches.executeBatch(WETH_TO_USDC_BATCH);
+        // The redeem fixtures were proven against these exact outputs.
+        assertEq(out1, vm.parseJsonUint(story, ".batch1Out"), "regenerate: node scripts/gen-fixtures.mjs batch");
+        assertEq(out2, vm.parseJsonUint(story, ".batch2Out"), "regenerate: node scripts/gen-fixtures.mjs batch");
+    }
+
+    function test_ticketsRedeemTheirProRataShare() public {
+        (uint256 out1, uint256 out2) = _executeBoth();
+
+        vm.expectEmit(false, true, true, false, address(pool));
+        emit ShieldedPool.Redeem(0, 3, USDC_TO_WETH_BATCH);
+        (uint256 priya, uint256 priyaFee) = _redeem("redeem_ticket_priya");
+        (uint256 rahul,) = _redeem("redeem_ticket_rahul");
+        (uint256 arjun, uint256 arjunFee) = _redeem("redeem_ticket_arjun");
+
+        // Pro rata at one uniform price: 50/80 and 30/80 of the batch output.
+        assertEq(priya, (50e6 * out1) / 80e6);
+        assertEq(rahul, (30e6 * out1) / 80e6);
+        assertEq(arjun, out2);
+        // Rounding only ever leaves dust in the pool, never takes more out.
+        assertLe(priya + rahul, out1);
+        assertLe(out1 - priya - rahul, 1);
+        assertEq(pool.nextLeafIndex(), 12, "one hidden balance note per ticket");
+
+        // Relayer fees come out of the payout, in the output asset.
+        assertEq(weth.balanceOf(relayer), priyaFee);
+        assertEq(usdc.balanceOf(relayer), 1e6 + arjunFee); // + two 0.5 USDC join fees
+        // The pool still holds every unspent note: the three outputs, plus change.
+        assertGe(weth.balanceOf(address(pool)), (priya - priyaFee) + rahul);
+        assertEq(usdc.balanceOf(address(pool)), 49.5e6 + 69.5e6 + arjun - arjunFee);
+    }
+
+    function test_ticketRedeemsOnlyOnce() public {
+        _executeBoth();
+        _redeem("redeem_ticket_priya");
+        (bytes memory proof, ShieldedPool.RedeemArgs memory a,) = _redeemFixture("redeem_ticket_priya");
+        vm.prank(relayer);
+        vm.expectRevert(ShieldedPool.NullifierSpent.selector);
+        pool.redeem(a, proof, "");
+    }
+
+    function test_ticketCannotRedeemBeforeExecution() public {
+        _joinAll();
+        (bytes memory proof, ShieldedPool.RedeemArgs memory a,) = _redeemFixture("redeem_ticket_priya");
+        vm.prank(relayer);
+        vm.expectRevert(BatchSwapper.NotFinal.selector);
+        pool.redeem(a, proof, "");
+    }
+
+    /// The contract supplies the ratio: a proof made for other terms (here the
+    /// 1:1 refund) is rejected once the batch has really executed.
+    function test_ticketMustUseTheBatchRatio() public {
+        _executeBoth();
+        (bytes memory proof, ShieldedPool.RedeemArgs memory a,) = _redeemFixture("redeem_ticket_priya_refund");
+        vm.prank(relayer);
+        vm.expectRevert(ShieldedPool.InvalidProof.selector);
+        pool.redeem(a, proof, "");
+    }
+
+    function test_cancelledBatchRefundsTicket1to1() public {
+        _joinAll();
+        vm.warp(block.timestamp + batches.BATCH_GRACE());
+        batches.cancelStale(USDC_TO_WETH_BATCH);
+        uint256 relayerBefore = usdc.balanceOf(relayer);
+        (uint256 payout, uint256 fee) = _redeem("redeem_ticket_priya_refund");
+        assertEq(payout, 50e6);
+        assertEq(usdc.balanceOf(relayer) - relayerBefore, fee);
+        // Nothing left the pool: change notes + the refunded note are all covered.
+        assertEq(usdc.balanceOf(address(pool)), 49.5e6 + 69.5e6 + 30e6 + (50e6 - fee));
+    }
+
+    // --- 5.4 donate market fees to LPs ----------------------------------------
+
+    /// A resolved market with a 100 USDC pot: 1 USDC protocol fee accrues.
+    function _accrueFees() internal {
+        markets.createMarket(
+            "m", "Yes|No", 2, uint64(block.timestamp + 1 hours), Markets.Source.Sports, "", address(0), 0
+        );
+        usdc.mint(address(pool), 100e6); // the stakes, as if bet privately
+        vm.startPrank(address(pool));
+        markets.addBet(1, 0, 60e6);
+        markets.addBet(1, 1, 40e6);
+        vm.stopPrank();
+        markets.setResolver(address(this));
+        vm.warp(block.timestamp + 1 hours);
+        markets.resolve(1, 0);
+        assertEq(markets.feesAccrued(), 1e6);
+    }
+
+    function test_donateFeesPaysInRangeLps() public {
+        _accrueFees();
+        (, uint256 growthBefore) = manager.getFeeGrowthGlobals(poolKey.toId());
+        uint128 liquidity = manager.getLiquidity(poolKey.toId());
+        uint256 poolUsdc = usdc.balanceOf(address(pool));
+        uint256 managerUsdc = usdc.balanceOf(address(manager));
+
+        vm.expectEmit(true, true, true, true, address(batches));
+        emit BatchSwapper.FeesDonated(1e6);
+        assertEq(batches.donateFees(), 1e6);
+
+        (, uint256 growthAfter) = manager.getFeeGrowthGlobals(poolKey.toId());
+        assertEq(growthAfter - growthBefore, FullMath.mulDiv(1e6, FixedPoint128.Q128, liquidity));
+        assertEq(usdc.balanceOf(address(manager)), managerUsdc + 1e6);
+        assertEq(usdc.balanceOf(address(pool)), poolUsdc - 1e6);
+        assertEq(markets.feesAccrued(), 0);
+        assertEq(usdc.balanceOf(address(batches)), 0);
+
+        // The LP (this contract) collects it: a zero-liquidity poke pays out fees.
+        uint256 lpBefore = usdc.balanceOf(address(this));
+        modifyLiquidityRouter.modifyLiquidity(poolKey, ModifyLiquidityParams(-887220, 887220, 0, 0), "");
+        assertApproxEqAbs(usdc.balanceOf(address(this)) - lpBefore, 1e6, 1);
+
+        vm.expectRevert(BatchSwapper.NoFees.selector);
+        batches.donateFees();
+    }
+
+    function test_donateFeesLeavesWinnersWhole() public {
+        _accrueFees();
+        batches.donateFees();
+        // Winners are owed pot - fee = 99 USDC; the pool still holds it.
+        (uint256 num,,,) = markets.redeemTerms(1);
+        assertEq(num, 99e6);
+        assertEq(usdc.balanceOf(address(pool)), 99e6);
+    }
+
+    function test_onlyBatchesReleasesFees() public {
+        vm.expectRevert(ShieldedPool.NotBatches.selector);
+        pool.releaseFees();
     }
 }

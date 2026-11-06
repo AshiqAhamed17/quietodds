@@ -26,14 +26,23 @@
 //   leaf 6  Arjun deposits 0.02 WETH
 //   leaf 7  Arjun joins batch 2 with 0.02, no fee -> change 0  (join_arjun_weth)
 //   leaf 8                                -> ticket 0.02
+//   -- both batches execute in one block (BatchSwapper.t.sol setup):
+//      batch 1: 80 USDC -> BATCH1_OUT wei, batch 2: 0.02 WETH -> BATCH2_OUT USDC --
+//   leaf 9  Priya redeems her ticket: 50/80 of BATCH1_OUT WETH  (redeem_ticket_priya)
+//   leaf 10 Rahul redeems his ticket: 30/80 of BATCH1_OUT WETH  (redeem_ticket_rahul)
+//   leaf 11 Arjun redeems his ticket: all of BATCH2_OUT USDC    (redeem_ticket_arjun)
+//   -- alternative branch: batch 1 cancelled after leaf 8 --
+//           Priya's ticket refunds 50 USDC 1:1                 (redeem_ticket_priya_refund)
 //
+// BATCH1_OUT/BATCH2_OUT are what the test pool returns. If the test pool or
+// the hook changes, BatchSwapper.t.sol fails loudly; re-measure and regenerate.
 // Output: contracts/test/fixtures/<name>.json  { proof, publicInputs, ctx }
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { merklePath } from "./lib/merkle.mjs";
 import {
-  ACTION, ASSET, TAG_POSITION, balanceLeaf, nullifierHash, positionLeaf, precommitment, ticketLeaf,
+  ACTION, ASSET, TAG_POSITION, TAG_TICKET, balanceLeaf, nullifierHash, positionLeaf, precommitment, ticketLeaf,
 } from "./lib/notes.mjs";
 import { prove } from "./lib/prove.mjs";
 
@@ -164,6 +173,30 @@ writeFileSync(join(OUT, "story.json"), JSON.stringify({
 console.log("wrote story.json");
 }
 
+const BATCH1_OUT = 39864101712921613n;
+const BATCH2_OUT = 39903855n;
+
+function ticketRedeemProof(name, leaves, { index, batch, amountIn, owner, num, den, assetOut, outNote, fee }) {
+  const path = merklePath(leaves, index);
+  const payout = (amountIn * num) / den;
+  const outCommitment = balanceLeaf(assetOut, payout - fee, outNote.pc);
+  const witness = {
+    x: amountIn, side: 0n, nullifier: owner.nullifier, secret: owner.secret,
+    path_indices: path.indices, path_siblings: path.siblings,
+    payout, out_precommitment: outNote.pc,
+    root: path.root,
+    nullifier_hash: nullifierHash(owner.nullifier),
+    kind: TAG_TICKET, id: batch,
+    required_side: 0n, any_side: 1n, // tickets carry no side
+    num, den,
+    asset_out: assetOut,
+    out_commitment: outCommitment,
+    relayer: RELAYER, fee,
+  };
+  save(name, prove("redeem", witness, name), { payout, outCommitment });
+  return outCommitment;
+}
+
 function batchStory() {
   const BATCH_USDC = 1n; // USDC -> WETH
   const BATCH_WETH = 2n; // WETH -> USDC
@@ -197,15 +230,32 @@ function batchStory() {
   }));
   leaves.push(ticketLeaf(BATCH_WETH, WETH, arjunTicket.pc));
 
+  // Branch B (batch 1 cancelled) from the 9-leaf tree: Priya's refund.
+  ticketRedeemProof("redeem_ticket_priya_refund", leaves, {
+    index: 2, batch: BATCH_USDC, amountIn: USDC(50), owner: priyaTicket,
+    num: 1n, den: 1n, assetOut: ASSET.USDC, outNote: note(531n, 632n), fee: USDC(0.5),
+  });
+
+  // Branch A: both batches executed.
+  leaves.push(ticketRedeemProof("redeem_ticket_priya", leaves, {
+    index: 2, batch: BATCH_USDC, amountIn: USDC(50), owner: priyaTicket,
+    num: BATCH1_OUT, den: USDC(80), assetOut: ASSET.WETH, outNote: note(541n, 642n), fee: 10n ** 13n,
+  }));
+  leaves.push(ticketRedeemProof("redeem_ticket_rahul", leaves, {
+    index: 5, batch: BATCH_USDC, amountIn: USDC(30), owner: rahulTicket,
+    num: BATCH1_OUT, den: USDC(80), assetOut: ASSET.WETH, outNote: note(741n, 842n), fee: 0n,
+  }));
+  leaves.push(ticketRedeemProof("redeem_ticket_arjun", leaves, {
+    index: 8, batch: BATCH_WETH, amountIn: WETH, owner: arjunTicket,
+    num: BATCH2_OUT, den: WETH, assetOut: ASSET.USDC, outNote: note(941n, 1042n), fee: USDC(0.05),
+  }));
+
   writeFileSync(join(OUT, "batch_story.json"), JSON.stringify({
+    batch1Out: hex(BATCH1_OUT),
+    batch2Out: hex(BATCH2_OUT),
     priyaDepositPrecommitment: hex(priya.pc),
     rahulDepositPrecommitment: hex(rahul.pc),
     arjunDepositPrecommitment: hex(arjun.pc),
-    ticketSecrets: {
-      priya: { nullifier: hex(priyaTicket.nullifier), secret: hex(priyaTicket.secret) },
-      rahul: { nullifier: hex(rahulTicket.nullifier), secret: hex(rahulTicket.secret) },
-      arjun: { nullifier: hex(arjunTicket.nullifier), secret: hex(arjunTicket.secret) },
-    },
     leaves: leaves.map(hex),
   }, null, 2) + "\n");
   console.log("wrote batch_story.json");

@@ -1,6 +1,7 @@
 import type { Address } from "viem";
 import external from "../../deployments/sepolia.json" with { type: "json" };
 import core from "../../deployments/quietodds-sepolia.json" with { type: "json" };
+import hook from "../../deployments/hook-sepolia.json" with { type: "json" };
 
 export interface Deployment {
   chainId: number;
@@ -11,6 +12,18 @@ export interface Deployment {
   usdc: Address;
   weth: Address;
   ethUsdFeed: Address;
+  hook: Address;
+  /** The ETH/USDC v4 pool with QuietOddsHook. */
+  poolKey: PoolKey;
+  poolSwapTest: Address;
+}
+
+export interface PoolKey {
+  currency0: Address;
+  currency1: Address;
+  fee: number;
+  tickSpacing: number;
+  hooks: Address;
 }
 
 /** QuietOdds on Ethereum Sepolia. */
@@ -23,4 +36,7 @@ export const sepolia: Deployment = {
   usdc: external.tokens.USDC.address as Address,
   weth: external.tokens.WETH.address as Address,
   ethUsdFeed: external.chainlinkFeeds.ETH_USD as Address,
+  hook: hook.QuietOddsHook as Address,
+  poolKey: hook.poolKey as PoolKey,
+  poolSwapTest: external.uniswapV4.PoolSwapTest as Address,
 };

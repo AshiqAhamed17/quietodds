@@ -6,7 +6,8 @@
     "poseidon-parity": "node poseidon-parity.mjs",
     "anon-rpc-smoke": "node anon-rpc-smoke/run.mjs",
     "fixtures": "node gen-fixtures.mjs",
-    "e2e": "tsx e2e.ts"
+    "e2e": "tsx e2e.ts",
+    "swap-and-bet": "tsx swap-and-bet.ts"
   },
   "dependencies": {
     "@anon-rpc/browser-harness": "^0.4.0",

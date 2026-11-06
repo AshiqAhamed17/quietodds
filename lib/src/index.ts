@@ -10,3 +10,4 @@ export * from "./witness.ts";
 export * from "./abi.ts";
 export * from "./deployments.ts";
 export * from "./relay.ts";
+export * from "./hook.ts";

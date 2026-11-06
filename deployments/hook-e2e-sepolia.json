@@ -1,0 +1,35 @@
+{
+  "network": "sepolia",
+  "hook": "0x2DaF3FA0F8215d40e78D094c7edC6731082140cc",
+  "poolKey": {
+    "currency0": "0x0000000000000000000000000000000000000000",
+    "currency1": "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238",
+    "fee": 3000,
+    "tickSpacing": 60,
+    "hooks": "0x2DaF3FA0F8215d40e78D094c7edC6731082140cc"
+  },
+  "relayer": "https://quietodds-relayer.vercel.app",
+  "steps": [
+    {
+      "step": "priya: approve USDC to the swap router",
+      "tx": "0xff501950fedabfa7e184a96902e54f47d6539293afdac6213a9085b5e6ebe6c9",
+      "gasUsed": "137757"
+    },
+    {
+      "step": "priya: swap 3 USDC -> ETH, shield 1 USDC",
+      "tx": "0xe24f268f06212b1dcc3bb8792e947eeb5fde763c28331912206915e87917b087",
+      "gasUsed": "1859064"
+    },
+    {
+      "step": "priya: private bet 0.95 USDC on market 6 YES (live relayer)",
+      "tx": "0xd6dda3d64184786570971d689526a27beb61706984ce720b1527b7cd7a8921c0",
+      "gasUsed": "6011865"
+    },
+    {
+      "step": "rahul: swap 0.002 ETH -> USDC, shield 1 USDC",
+      "tx": "0xcf6e1963c0baebc519d5e6a1762f744e96dd63c39fb98e0b35044cdf964c2eae",
+      "gasUsed": "1405806"
+    }
+  ],
+  "completedAt": "2026-11-06T00:55:19.159Z"
+}

@@ -37,7 +37,7 @@ import {
 	priceOutcome,
 	SOURCE_PRICE,
 	SOURCE_SPORTS,
-	sportsOutcome,
+	espnOutcome,
 	STATUS_OPEN,
 	toAction,
 	upkeepActions,
@@ -73,10 +73,16 @@ const feedAbi = parseAbi([
 ])
 
 /** Runs on each node; the DON takes the median of the result codes. */
-export const fetchSportsCode = (requester: HTTPSendRequester, url: string, numSides: number): number => {
+export const fetchSportsCode = (
+	requester: HTTPSendRequester,
+	url: string,
+	sourceRef: string,
+	numSides: number,
+	outcomes: string,
+): number => {
 	const res = requester.sendRequest({ url, method: 'GET', cacheSettings: { store: false } }).result()
 	if (!ok(res)) throw new Error(`ESPN request failed: HTTP ${res.statusCode}`)
-	return sportsOutcome(json(res) as Parameters<typeof sportsOutcome>[0], numSides)
+	return espnOutcome(sourceRef, json(res), numSides, outcomes)
 }
 
 export const onCron = (runtime: Runtime<Config>): string => {
@@ -103,6 +109,7 @@ export const onCron = (runtime: Runtime<Config>): string => {
 	for (let id = 1n; id <= count && checked < cfg.maxMarketsPerRun; id++) {
 		const m = read(cfg.markets, marketsAbi, 'getMarket', [id]) as {
 			question: string
+			outcomes: string
 			numSides: number
 			closeTime: bigint
 			source: number
@@ -122,7 +129,9 @@ export const onCron = (runtime: Runtime<Config>): string => {
 			code = http
 				.sendRequest(runtime, fetchSportsCode, consensusMedianAggregation<number>())(
 					espnUrl(m.sourceRef, cfg.espnBaseUrl),
+					m.sourceRef,
 					m.numSides,
+					m.outcomes,
 				)
 				.result()
 		} else {

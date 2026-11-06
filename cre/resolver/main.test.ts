@@ -10,6 +10,8 @@ import {
 	espnUrl,
 	priceOutcome,
 	sportsOutcome,
+	raceOutcome,
+	espnOutcome,
 	toAction,
 	upkeepActions,
 } from './logic'
@@ -106,4 +108,30 @@ test('one cron handler on the configured schedule', () => {
 	})
 	expect(handlers).toHaveLength(1)
 	expect((handlers[0].trigger as unknown as { config: { schedule: string } }).config.schedule).toBe('0 */10 * * * *')
+})
+
+describe('raceOutcome', () => {
+	const race = (name: string, completed: boolean, winner?: string) => ({
+		competitions: [
+			{ type: { abbreviation: 'Qual' }, status: { type: { name: 'STATUS_FINAL', completed: true } }, competitors: [] },
+			{
+				type: { abbreviation: 'Race' },
+				status: { type: { name, completed } },
+				competitors: winner ? [{ winner: true, order: 1, athlete: { displayName: winner } }, { winner: false, order: 2, athlete: { displayName: 'Someone' } }] : [],
+			},
+		],
+	})
+	const sides = ['Kimi Antonelli', 'Max Verstappen', 'Lewis Hamilton', 'Anyone else']
+	test('the named winner, or the field', () => {
+		expect(raceOutcome(race('STATUS_FINAL', true, 'Max Verstappen'), sides)).toBe(1)
+		expect(raceOutcome(race('STATUS_FINAL', true, 'Lando Norris'), sides)).toBe(3)
+		expect(raceOutcome(race('STATUS_FINAL', true, 'Lando Norris'), sides.slice(0, 3))).toBe(CANCEL)
+	})
+	test('pending until the race is final; void statuses cancel', () => {
+		expect(raceOutcome(race('STATUS_SCHEDULED', false), sides)).toBe(PENDING)
+		expect(raceOutcome(race('STATUS_CANCELED', false), sides)).toBe(CANCEL)
+	})
+	test('espnOutcome routes racing refs', () => {
+		expect(espnOutcome('espn:racing/f1:600057447', race('STATUS_FINAL', true, 'Kimi Antonelli'), 4, sides.join('|'))).toBe(0)
+	})
 })

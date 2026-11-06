@@ -61,6 +61,43 @@ export function sportsOutcome(event: EspnEvent, numSides: number): number {
 	throw new Error(`unsupported sports market with ${numSides} sides`)
 }
 
+interface EspnRaceEvent {
+	competitions?: Array<{
+		type?: { abbreviation?: string }
+		status?: { type?: { name?: string; completed?: boolean } }
+		competitors?: Array<{ winner?: boolean; order?: number; athlete?: { displayName?: string } }>
+	}>
+}
+
+/** The side label that catches every driver not named in the market. */
+export const FIELD_LABEL = 'Anyone else'
+
+/**
+ * Racing (e.g. "espn:racing/f1:600057448"): the sides are driver names, with an
+ * optional last side "Anyone else". The winner is the Race session's competitor
+ * flagged `winner`. A cancelled race, or a winner with no side to match, refunds.
+ */
+export function raceOutcome(event: EspnRaceEvent, outcomes: string[]): number {
+	const race = event.competitions?.find((c) => c.type?.abbreviation === 'Race')
+	const status = race?.status?.type
+	if (!status?.name) throw new Error('ESPN response has no race status')
+	if (VOID_STATUSES.has(status.name)) return CANCEL
+	if (!status.completed) return PENDING
+	const winner = race?.competitors?.find((c) => c.winner === true || c.order === 1)?.athlete?.displayName
+	if (!winner) throw new Error('ESPN race has no winner')
+	const norm = (s: string) => s.trim().toLowerCase()
+	const named = outcomes.findIndex((o) => norm(o) === norm(winner))
+	if (named >= 0) return named
+	const field = outcomes.findIndex((o) => norm(o) === norm(FIELD_LABEL))
+	return field >= 0 ? field : CANCEL
+}
+
+/** One result code for any ESPN-backed market. */
+export function espnOutcome(sourceRef: string, event: unknown, numSides: number, outcomes: string): number {
+	if (sourceRef.startsWith('espn:racing/')) return raceOutcome(event as EspnRaceEvent, outcomes.split('|').slice(0, numSides))
+	return sportsOutcome(event as EspnEvent, numSides)
+}
+
 /** Mirrors Markets.resolveFromFeed: YES (1) iff price > threshold. */
 export function priceOutcome(
 	price: bigint,

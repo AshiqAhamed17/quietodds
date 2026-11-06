@@ -10,6 +10,7 @@ import {IPoolManager} from "@uniswap/v4-core/src/interfaces/IPoolManager.sol";
 import {Hooks} from "@uniswap/v4-core/src/libraries/Hooks.sol";
 import {CustomRevert} from "@uniswap/v4-core/src/libraries/CustomRevert.sol";
 import {PoolKey} from "@uniswap/v4-core/src/types/PoolKey.sol";
+import {TickMath} from "@uniswap/v4-core/src/libraries/TickMath.sol";
 import {StateLibrary} from "@uniswap/v4-core/src/libraries/StateLibrary.sol";
 import {Currency} from "@uniswap/v4-core/src/types/Currency.sol";
 import {ModifyLiquidityParams} from "@uniswap/v4-core/src/types/PoolOperation.sol";
@@ -271,6 +272,17 @@ contract QuietOddsHookTest is Deployers {
         assertGt(g0After, g0, "guard skimmed the token0 output");
         assertEq(s.usdc.balanceOf(address(s.hook)), 0);
         assertEq(s.other.balanceOf(address(s.hook)), 0);
+    }
+
+    function test_firstSwapOnAnEthUsdcPricedPoolIsCheap() public {
+        // ETH/USDC sits near tick -195,000; the snapshot must not loop over ticks.
+        Setup memory s = setups[0];
+        PoolKey memory k = PoolKey(currency0, currency1, 500, 10, IHooks(address(s.hook)));
+        manager.initialize(k, TickMath.getSqrtPriceAtTick(-195_000));
+        modifyLiquidityRouter.modifyLiquidity(k, ModifyLiquidityParams(-887270, 887270, 1e20, 0), "");
+        uint256 g = gasleft();
+        swap(k, false, -1e6, "");
+        assertLt(g - gasleft(), 400_000);
     }
 
     function _wrapped(QuietOddsHook hook, bytes4 callback, bytes4 err) internal pure returns (bytes memory) {

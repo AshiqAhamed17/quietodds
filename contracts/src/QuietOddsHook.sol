@@ -164,25 +164,20 @@ contract QuietOddsHook is BaseHook {
     // --- anti-sandwich -------------------------------------------------------
 
     /// Updates the start-of-block snapshot on the block's first swap.
+    /// @dev OZ's version also copies every tick the price crossed since the last
+    ///      snapshot, but never the tick bitmap, so its simulation never crosses
+    ///      a tick and never reads them. We keep only what the simulation uses:
+    ///      price and in-range liquidity. The target therefore assumes constant
+    ///      in-range liquidity (exact for full-range positions, which is how this
+    ///      pool is seeded), and the first swap on a new pool doesn't loop over
+    ///      ~3,000 ticks to reach tick -195,000 (ETH/USDC).
     function _checkpoint(PoolKey calldata key) internal returns (Checkpoint storage cp) {
         PoolId id = key.toId();
         cp = _checkpoints[id];
         uint48 blockNumber = uint48(block.number);
         if (cp.blockNumber == blockNumber) return cp;
-
-        int24 lastTick = cp.state.slot0.tick();
-        cp.state.slot0 = Slot0.wrap(poolManager.extsload(StateLibrary._getPoolStateSlot(id)));
         cp.blockNumber = blockNumber;
-
-        // Refresh every tick the price moved across since the last snapshot.
-        (, int24 currentTick,,) = poolManager.getSlot0(id);
-        (int24 from, int24 to) = currentTick < lastTick ? (currentTick, lastTick) : (lastTick, currentTick);
-        for (int24 tick = from; tick <= to; tick += key.tickSpacing) {
-            Pool.TickInfo storage t = cp.state.ticks[tick];
-            (t.liquidityGross, t.liquidityNet, t.feeGrowthOutside0X128, t.feeGrowthOutside1X128) =
-                poolManager.getTickInfo(id, tick);
-        }
-        (cp.state.feeGrowthGlobal0X128, cp.state.feeGrowthGlobal1X128) = poolManager.getFeeGrowthGlobals(id);
+        cp.state.slot0 = Slot0.wrap(poolManager.extsload(StateLibrary._getPoolStateSlot(id)));
         cp.state.liquidity = poolManager.getLiquidity(id);
     }
 

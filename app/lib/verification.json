@@ -1,0 +1,1056 @@
+{
+  "generatedAt": "2026-11-07T00:18:30.853Z",
+  "commit": "7968b7728a3b9e93ce6990bb0fffdb248089b831",
+  "tools": {
+    "nargo": "1.0.0-beta.25",
+    "forge": "1.7.1",
+    "lean": "leanprover/lean4:v4.35.0",
+    "bun": "1.3.14"
+  },
+  "lean": {
+    "ok": true,
+    "seconds": 6.4,
+    "jobs": 9054,
+    "sorries": 0,
+    "customAxioms": 0,
+    "toolchain": "leanprover/lean4:v4.35.0",
+    "theorems": [
+      {
+        "name": "spend_conserves_value",
+        "file": "lean/QuietOdds/Spend.lean",
+        "line": 29,
+        "statement": "theorem spend_conserves_value (amount change pub fee : ZMod p)\n    /- main.nr line 50: `assert_u128(amount)` -/\n    (hA : amount.val < 2 ^ 128)\n    /- main.nr line 51: `assert_u128(change)` -/\n    (hC : change.val < 2 ^ 128)\n    /- main.nr line 52: `assert_u128(public_amount)` -/\n    (hP : pub.val < 2 ^ 128)\n    /- main.nr line 53: `assert_u128(fee)` -/\n    (hF : fee.val < 2 ^ 128)\n    /- main.nr line 54: `assert(amount == change + public_amount + fee)` (field equality) -/\n    (hCircuit : amount = change + pub + fee) :\n    amount.val = change.val + pub.val + fee.val",
+        "axioms": [
+          "propext",
+          "Quot.sound"
+        ]
+      },
+      {
+        "name": "redeem_payout_exact",
+        "file": "lean/QuietOdds/Redeem.lean",
+        "line": 61,
+        "statement": "theorem redeem_payout_exact (x num den payout : ZMod p)\n    /- main.nr line 67: `assert_u96(x)` -/\n    (hx : x.val < 2 ^ 96)\n    /- main.nr line 68: `assert_u96(num)` -/\n    (hn : num.val < 2 ^ 96)\n    /- main.nr line 69: `assert_u96(den)` -/\n    (hd : den.val < 2 ^ 96)\n    /- main.nr line 70: `assert_u96(payout)` -/\n    (hpay : payout.val < 2 ^ 96)\n    /- main.nr line 71: `assert(den != 0)` -/\n    (hd0 : den ≠ 0)\n    /- main.nr lines 72-73: `remainder = x * num - payout * den; assert_u96(remainder)` -/\n    (hr : (x * num - payout * den).val < 2 ^ 96)\n    /- main.nr line 74: `assert_u96(den - remainder - 1)` -/\n    (hLess : (den - (x * num - payout * den) - 1).val < 2 ^ 96) :\n    payout.val = x.val * num.val / den.val ∧\n      (x * num - payout * den).val = x.val * num.val % den.val",
+        "axioms": [
+          "propext",
+          "Quot.sound"
+        ]
+      },
+      {
+        "name": "redeem_fee_sound",
+        "file": "lean/QuietOdds/Redeem.lean",
+        "line": 112,
+        "statement": "theorem redeem_fee_sound (payout fee : ZMod p)\n    /- main.nr line 70: `assert_u96(payout)` -/\n    (hpay : payout.val < 2 ^ 96)\n    /- main.nr line 78: `assert_u128(fee)` -/\n    (hF : fee.val < 2 ^ 128)\n    /- main.nr lines 77, 79: `out_amount = payout - fee; assert_u128(out_amount)` -/\n    (hOut : (payout - fee).val < 2 ^ 128) :\n    fee.val ≤ payout.val ∧ (payout - fee).val = payout.val - fee.val",
+        "axioms": [
+          "propext",
+          "Classical.choice",
+          "Quot.sound"
+        ]
+      },
+      {
+        "name": "pro_rata_conserves",
+        "file": "lean/QuietOdds/ProRata.lean",
+        "line": 38,
+        "statement": "theorem pro_rata_conserves {ι : Type*} (s : Finset ι) (x : ι → ℕ) (N D : ℕ)\n    (hD : ∑ i ∈ s, x i = D) :\n    ∑ i ∈ s, x i * N / D ≤ N",
+        "axioms": [
+          "propext",
+          "Classical.choice",
+          "Quot.sound"
+        ]
+      },
+      {
+        "name": "pro_rata_dust_lt_card",
+        "file": "lean/QuietOdds/ProRata.lean",
+        "line": 50,
+        "statement": "theorem pro_rata_dust_lt_card {ι : Type*} (s : Finset ι) (x : ι → ℕ) (N D : ℕ)\n    (hD : ∑ i ∈ s, x i = D) (hDpos : 0 < D) :\n    N < ∑ i ∈ s, x i * N / D + s.card",
+        "axioms": [
+          "propext",
+          "Classical.choice",
+          "Quot.sound"
+        ]
+      },
+      {
+        "name": "sandwich_unprofitable",
+        "file": "lean/QuietOdds/Sandwich.lean",
+        "line": 46,
+        "statement": "theorem sandwich_unprofitable (q P₀ P₂ cost revenue f : ℝ)\n    (hq : 0 ≤ q) (hP₀ : 0 < P₀) (hup : P₀ ≤ P₂)\n    /- every unit of the front-run is bought at a price `≥ P₀` -/\n    (hCost : q * P₀ ≤ cost)\n    /- every unit of the back-run sells at a price `≤ P₂`, after the fee -/\n    (hRev : revenue ≤ q * (1 - f) * P₂)\n    (hFee : (P₂ - P₀) / P₀ ≤ f)\n    /- `f ≤ 1` (kept to match the paper statement; the proof does not need it) -/\n    (_hf1 : f ≤ 1) :\n    revenue - cost ≤ 0",
+        "axioms": [
+          "propext",
+          "Classical.choice",
+          "Quot.sound"
+        ]
+      },
+      {
+        "name": "sandwich_unprofitable_fee_rule",
+        "file": "lean/QuietOdds/Sandwich.lean",
+        "line": 71,
+        "statement": "theorem sandwich_unprofitable_fee_rule (q P₀ P₂ cost revenue base : ℝ)\n    (hq : 0 ≤ q) (hP₀ : 0 < P₀) (hup : P₀ ≤ P₂) (hbase : 0 ≤ base)\n    (hCost : q * P₀ ≤ cost)\n    (hRev : revenue ≤ q * (1 - (base + (P₂ - P₀) / P₀)) * P₂)\n    (hf1 : base + (P₂ - P₀) / P₀ ≤ 1) :\n    revenue - cost ≤ 0",
+        "axioms": [
+          "propext",
+          "Classical.choice",
+          "Quot.sound"
+        ]
+      },
+      {
+        "name": "capped_fee_counterexample",
+        "file": "lean/QuietOdds/Sandwich.lean",
+        "line": 83,
+        "statement": "theorem capped_fee_counterexample (q P₀ P₂ base : ℝ)\n    (hq : 0 < q) (hP₀ : 0 < P₀) (hbig : 2 * P₀ < P₂) (hbase : 0 ≤ base) :\n    let f := min (base + (P₂ - P₀) / P₀) (1 / 2)\n    0 < q * (1 - f) * P₂ - q * P₀",
+        "axioms": [
+          "propext",
+          "Classical.choice",
+          "Quot.sound"
+        ]
+      }
+    ]
+  },
+  "noir": {
+    "ok": true,
+    "seconds": 1.3,
+    "suites": [
+      {
+        "name": "quietodds",
+        "tests": [
+          {
+            "name": "merkle::assert_member_fails_for_wrong_leaf",
+            "pass": true
+          },
+          {
+            "name": "merkle::assert_member_fails_for_wrong_root",
+            "pass": true
+          },
+          {
+            "name": "merkle::assert_member_passes_for_valid_path",
+            "pass": true
+          },
+          {
+            "name": "merkle::rejects_non_boolean_index",
+            "pass": true
+          },
+          {
+            "name": "merkle::single_level_left_child",
+            "pass": true
+          },
+          {
+            "name": "merkle::single_level_right_child",
+            "pass": true
+          },
+          {
+            "name": "merkle::two_levels_mixed_directions",
+            "pass": true
+          },
+          {
+            "name": "merkle::works_at_production_depth",
+            "pass": true
+          },
+          {
+            "name": "note::balance_leaf_binds_every_field",
+            "pass": true
+          },
+          {
+            "name": "note::leaves_are_domain_separated",
+            "pass": true
+          },
+          {
+            "name": "note::nullifier_hash_ignores_secret",
+            "pass": true
+          },
+          {
+            "name": "note::nullifier_hash_is_not_the_precommitment",
+            "pass": true
+          },
+          {
+            "name": "note::position_leaf_binds_every_field",
+            "pass": true
+          },
+          {
+            "name": "note::u128_accepts_max",
+            "pass": true
+          },
+          {
+            "name": "note::u128_rejects_overflow",
+            "pass": true
+          },
+          {
+            "name": "parity::hash_2_matches_js_and_solidity",
+            "pass": true
+          },
+          {
+            "name": "parity::hash_4_matches_js_and_solidity",
+            "pass": true
+          },
+          {
+            "name": "parity::hash_5_matches_js_and_solidity",
+            "pass": true
+          }
+        ]
+      },
+      {
+        "name": "redeem",
+        "tests": [
+          {
+            "name": "batch_ticket_redeems_pro_rata",
+            "pass": true
+          },
+          {
+            "name": "loser_cannot_claim",
+            "pass": true
+          },
+          {
+            "name": "refund_any_side_one_to_one",
+            "pass": true
+          },
+          {
+            "name": "rejects_fee_above_payout",
+            "pass": true
+          },
+          {
+            "name": "rejects_inflated_payout",
+            "pass": true
+          },
+          {
+            "name": "rejects_understated_payout",
+            "pass": true
+          },
+          {
+            "name": "rejects_unknown_kind",
+            "pass": true
+          },
+          {
+            "name": "rejects_zero_denominator",
+            "pass": true
+          },
+          {
+            "name": "ticket_cannot_pose_as_position",
+            "pass": true
+          },
+          {
+            "name": "winner_claims_exact_floor_payout",
+            "pass": true
+          }
+        ]
+      },
+      {
+        "name": "spend",
+        "tests": [
+          {
+            "name": "full_withdraw_zero_change",
+            "pass": true
+          },
+          {
+            "name": "rejects_inflated_note_amount",
+            "pass": true
+          },
+          {
+            "name": "rejects_mismatched_change_commitment",
+            "pass": true
+          },
+          {
+            "name": "rejects_negative_change_wraparound",
+            "pass": true
+          },
+          {
+            "name": "rejects_note_not_in_tree",
+            "pass": true
+          },
+          {
+            "name": "rejects_value_creation",
+            "pass": true
+          },
+          {
+            "name": "rejects_wrong_nullifier_hash",
+            "pass": true
+          },
+          {
+            "name": "valid_bet_spend",
+            "pass": true
+          }
+        ]
+      }
+    ],
+    "passed": 36,
+    "failed": 0,
+    "total": 36
+  },
+  "forge": {
+    "ok": true,
+    "seconds": 5.2,
+    "suites": [
+      {
+        "name": "BatchSwapperTest",
+        "file": "test/BatchSwapper.t.sol",
+        "tests": [
+          {
+            "name": "test_adminSettersAreOneTimeAndBounded",
+            "pass": true,
+            "kind": "unit"
+          },
+          {
+            "name": "test_batchNeverFillsWorseThanOracleBound",
+            "pass": true,
+            "kind": "fuzz",
+            "runs": 256
+          },
+          {
+            "name": "test_cancelStaleRefundsInInputAsset",
+            "pass": true,
+            "kind": "unit"
+          },
+          {
+            "name": "test_cancelledBatchRefundsTicket1to1",
+            "pass": true,
+            "kind": "unit"
+          },
+          {
+            "name": "test_donateFeesLeavesWinnersWhole",
+            "pass": true,
+            "kind": "unit"
+          },
+          {
+            "name": "test_donateFeesPaysInRangeLps",
+            "pass": true,
+            "kind": "unit"
+          },
+          {
+            "name": "test_executeChecksTiming",
+            "pass": true,
+            "kind": "unit"
+          },
+          {
+            "name": "test_executeUsdcToWethBatch",
+            "pass": true,
+            "kind": "unit"
+          },
+          {
+            "name": "test_executeWethToUsdcBatch",
+            "pass": true,
+            "kind": "unit"
+          },
+          {
+            "name": "test_frontRunBeyondOracleBoundReverts",
+            "pass": true,
+            "kind": "unit"
+          },
+          {
+            "name": "test_joinAfterExecutionReverts",
+            "pass": true,
+            "kind": "unit"
+          },
+          {
+            "name": "test_joinMintsTicketAndAddsToBatch",
+            "pass": true,
+            "kind": "unit"
+          },
+          {
+            "name": "test_joinRejectsWrongAssetDustAndClosedBatch",
+            "pass": true,
+            "kind": "unit"
+          },
+          {
+            "name": "test_onlyBatchesReleasesFees",
+            "pass": true,
+            "kind": "unit"
+          },
+          {
+            "name": "test_onlyPoolJoinsOnlyBatchesReleases",
+            "pass": true,
+            "kind": "unit"
+          },
+          {
+            "name": "test_oracleChecks",
+            "pass": true,
+            "kind": "unit"
+          },
+          {
+            "name": "test_redeemTermsRevertUntilFinal",
+            "pass": true,
+            "kind": "unit"
+          },
+          {
+            "name": "test_secondBatchInABlockPaysTheBaseFee",
+            "pass": true,
+            "kind": "unit"
+          },
+          {
+            "name": "test_setPoolOpensOneBatchPerDirection",
+            "pass": true,
+            "kind": "unit"
+          },
+          {
+            "name": "test_ticketCannotRedeemBeforeExecution",
+            "pass": true,
+            "kind": "unit"
+          },
+          {
+            "name": "test_ticketMustUseTheBatchRatio",
+            "pass": true,
+            "kind": "unit"
+          },
+          {
+            "name": "test_ticketRedeemsOnlyOnce",
+            "pass": true,
+            "kind": "unit"
+          },
+          {
+            "name": "test_ticketsRedeemTheirProRataShare",
+            "pass": true,
+            "kind": "unit"
+          },
+          {
+            "name": "test_unlockCallbackOnlyFromPoolManager",
+            "pass": true,
+            "kind": "unit"
+          },
+          {
+            "name": "test_wethJoinGoesToTheWethBatch",
+            "pass": true,
+            "kind": "unit"
+          }
+        ]
+      },
+      {
+        "name": "DirectionalFeeTest",
+        "file": "test/DirectionalFee.t.sol",
+        "tests": [
+          {
+            "name": "testFuzz_sandwichNeverProfitsEitherDirection",
+            "pass": true,
+            "kind": "fuzz",
+            "runs": 1000
+          },
+          {
+            "name": "test_controlSandwichProfitsOnStaticPool",
+            "pass": true,
+            "kind": "unit"
+          },
+          {
+            "name": "test_feeIsCapped",
+            "pass": true,
+            "kind": "unit"
+          },
+          {
+            "name": "test_ordinarySwapsPayTheBaseFee",
+            "pass": true,
+            "kind": "unit"
+          },
+          {
+            "name": "test_reversingSwapPaysTheMove",
+            "pass": true,
+            "kind": "unit"
+          },
+          {
+            "name": "test_sameSandwichLosesOnDynamicPool",
+            "pass": true,
+            "kind": "unit"
+          },
+          {
+            "name": "test_staticFeePoolIsUnchanged",
+            "pass": true,
+            "kind": "unit"
+          }
+        ]
+      },
+      {
+        "name": "ImportsTest",
+        "file": "test/Imports.t.sol",
+        "tests": [
+          {
+            "name": "test_dependenciesResolve",
+            "pass": true,
+            "kind": "unit"
+          }
+        ]
+      },
+      {
+        "name": "MarketsTest",
+        "file": "test/Markets.t.sol",
+        "tests": [
+          {
+            "name": "test_cancelStaleAfterGrace",
+            "pass": true,
+            "kind": "unit"
+          },
+          {
+            "name": "test_cannotResolveTwice",
+            "pass": true,
+            "kind": "unit"
+          },
+          {
+            "name": "test_createAndBet",
+            "pass": true,
+            "kind": "unit"
+          },
+          {
+            "name": "test_emptyWinningSideRefunds",
+            "pass": true,
+            "kind": "unit"
+          },
+          {
+            "name": "test_feedPriceFromBeforeCloseRejected",
+            "pass": true,
+            "kind": "unit"
+          },
+          {
+            "name": "test_noBetAfterClose",
+            "pass": true,
+            "kind": "unit"
+          },
+          {
+            "name": "test_noBetOnBadSide",
+            "pass": true,
+            "kind": "unit"
+          },
+          {
+            "name": "test_onlyOwnerCreates",
+            "pass": true,
+            "kind": "unit"
+          },
+          {
+            "name": "test_onlyPoolBets",
+            "pass": true,
+            "kind": "unit"
+          },
+          {
+            "name": "test_onlyResolverResolves",
+            "pass": true,
+            "kind": "unit"
+          },
+          {
+            "name": "test_poolSetOnce",
+            "pass": true,
+            "kind": "unit"
+          },
+          {
+            "name": "test_resolveFromFeedNo",
+            "pass": true,
+            "kind": "unit"
+          },
+          {
+            "name": "test_resolveFromFeedYes",
+            "pass": true,
+            "kind": "unit"
+          },
+          {
+            "name": "test_resolveWinAndTerms",
+            "pass": true,
+            "kind": "unit"
+          },
+          {
+            "name": "test_resolverCancel",
+            "pass": true,
+            "kind": "unit"
+          },
+          {
+            "name": "test_sportsMarketCannotUseFeed",
+            "pass": true,
+            "kind": "unit"
+          },
+          {
+            "name": "test_staleFeedRejected",
+            "pass": true,
+            "kind": "unit"
+          }
+        ]
+      },
+      {
+        "name": "PayoutFuzzTest",
+        "file": "test/Invariants.t.sol",
+        "tests": [
+          {
+            "name": "testFuzz_payoutsNeverExceedPot",
+            "pass": true,
+            "kind": "fuzz",
+            "runs": 256
+          }
+        ]
+      },
+      {
+        "name": "PoolInvariantTest",
+        "file": "test/Invariants.t.sol",
+        "tests": [
+          {
+            "name": "invariant_noJunkProofAccepted",
+            "pass": true,
+            "kind": "invariant",
+            "runs": 32
+          },
+          {
+            "name": "invariant_oneLeafPerDeposit",
+            "pass": true,
+            "kind": "invariant",
+            "runs": 32
+          },
+          {
+            "name": "invariant_poolHoldsEveryDeposit",
+            "pass": true,
+            "kind": "invariant",
+            "runs": 32
+          }
+        ]
+      },
+      {
+        "name": "PoseidonMerkleTreeTest",
+        "file": "test/PoseidonMerkleTree.t.sol",
+        "tests": [
+          {
+            "name": "test_emptyRootIsZeroSubtree",
+            "pass": true,
+            "kind": "unit"
+          },
+          {
+            "name": "test_insertGas",
+            "pass": true,
+            "kind": "unit"
+          },
+          {
+            "name": "test_oldRootsExpire",
+            "pass": true,
+            "kind": "unit"
+          },
+          {
+            "name": "test_rejectsLeafOutsideField",
+            "pass": true,
+            "kind": "unit"
+          },
+          {
+            "name": "test_rootHistory",
+            "pass": true,
+            "kind": "unit"
+          },
+          {
+            "name": "test_rootMatchesJsTree",
+            "pass": true,
+            "kind": "unit"
+          },
+          {
+            "name": "test_rootMatchesProofFixture",
+            "pass": true,
+            "kind": "unit"
+          },
+          {
+            "name": "test_zerosChain",
+            "pass": true,
+            "kind": "unit"
+          }
+        ]
+      },
+      {
+        "name": "PoseidonParityTest",
+        "file": "test/PoseidonParity.t.sol",
+        "tests": [
+          {
+            "name": "test_hash2",
+            "pass": true,
+            "kind": "unit"
+          },
+          {
+            "name": "test_hash4",
+            "pass": true,
+            "kind": "unit"
+          },
+          {
+            "name": "test_hash5",
+            "pass": true,
+            "kind": "unit"
+          }
+        ]
+      },
+      {
+        "name": "QuietOddsHookTest",
+        "file": "test/QuietOddsHook.t.sol",
+        "tests": [
+          {
+            "name": "testFuzz_plainSwapIsUntouched",
+            "pass": true,
+            "kind": "fuzz",
+            "runs": 256
+          },
+          {
+            "name": "testFuzz_sandwichNeverPaysInOneBlock",
+            "pass": true,
+            "kind": "fuzz",
+            "runs": 256
+          },
+          {
+            "name": "testFuzz_shieldOnEverySwapShape",
+            "pass": true,
+            "kind": "fuzz",
+            "runs": 1000
+          },
+          {
+            "name": "test_firstSwapOnAnEthUsdcPricedPoolIsCheap",
+            "pass": true,
+            "kind": "unit"
+          },
+          {
+            "name": "test_guardOnlyCoversOneBlock",
+            "pass": true,
+            "kind": "unit"
+          },
+          {
+            "name": "test_hookAddressHasExactlyItsFlags",
+            "pass": true,
+            "kind": "unit"
+          },
+          {
+            "name": "test_noteLeafIsBuiltFromThePublicAmount",
+            "pass": true,
+            "kind": "unit"
+          },
+          {
+            "name": "test_revertsOnPoolWithoutUsdc",
+            "pass": true,
+            "kind": "unit"
+          },
+          {
+            "name": "test_revertsOnZeroShield",
+            "pass": true,
+            "kind": "unit"
+          },
+          {
+            "name": "test_revertsWhenShieldEatsTheWholeExactInput",
+            "pass": true,
+            "kind": "unit"
+          },
+          {
+            "name": "test_revertsWhenShieldExceedsOutput",
+            "pass": true,
+            "kind": "unit"
+          },
+          {
+            "name": "test_sandwichPaysWithoutTheHook",
+            "pass": true,
+            "kind": "unit"
+          },
+          {
+            "name": "test_shieldStillExactWhenTheGuardSkims",
+            "pass": true,
+            "kind": "unit"
+          },
+          {
+            "name": "test_skimGoesToLps",
+            "pass": true,
+            "kind": "unit"
+          }
+        ]
+      },
+      {
+        "name": "ResolverReceiverTest",
+        "file": "test/ResolverReceiver.t.sol",
+        "tests": [
+          {
+            "name": "test_batchSkipsFailedActions",
+            "pass": true,
+            "kind": "unit"
+          },
+          {
+            "name": "test_cancelsThroughForwarder",
+            "pass": true,
+            "kind": "unit"
+          },
+          {
+            "name": "test_executesBatchesAndDonatesInOneReport",
+            "pass": true,
+            "kind": "unit"
+          },
+          {
+            "name": "test_onlyOwnerConfigures",
+            "pass": true,
+            "kind": "unit"
+          },
+          {
+            "name": "test_rejectsForeignWorkflow",
+            "pass": true,
+            "kind": "unit"
+          },
+          {
+            "name": "test_rejectsNonForwarder",
+            "pass": true,
+            "kind": "unit"
+          },
+          {
+            "name": "test_resolveBeforeCloseIsLoggedNotApplied",
+            "pass": true,
+            "kind": "unit"
+          },
+          {
+            "name": "test_resolvesThroughForwarder",
+            "pass": true,
+            "kind": "unit"
+          },
+          {
+            "name": "test_supportsInterface",
+            "pass": true,
+            "kind": "unit"
+          }
+        ]
+      },
+      {
+        "name": "ShieldedPoolTest",
+        "file": "test/ShieldedPool.t.sol",
+        "tests": [
+          {
+            "name": "test_betAfterCloseRejected",
+            "pass": true,
+            "kind": "unit"
+          },
+          {
+            "name": "test_bothSidesBet",
+            "pass": true,
+            "kind": "unit"
+          },
+          {
+            "name": "test_cannotClaimTwice",
+            "pass": true,
+            "kind": "unit"
+          },
+          {
+            "name": "test_depositBuildsLeafOnChain",
+            "pass": true,
+            "kind": "unit"
+          },
+          {
+            "name": "test_depositRejectsUnknownAssetAndZero",
+            "pass": true,
+            "kind": "unit"
+          },
+          {
+            "name": "test_fullStoryAndSolvency",
+            "pass": true,
+            "kind": "unit"
+          },
+          {
+            "name": "test_nullifierCannotBeReused",
+            "pass": true,
+            "kind": "unit"
+          },
+          {
+            "name": "test_onlyNamedRelayerCanSubmit",
+            "pass": true,
+            "kind": "unit"
+          },
+          {
+            "name": "test_onlyPoolCanAddBets",
+            "pass": true,
+            "kind": "unit"
+          },
+          {
+            "name": "test_privateBet",
+            "pass": true,
+            "kind": "unit"
+          },
+          {
+            "name": "test_redeemBeforeResolutionRejected",
+            "pass": true,
+            "kind": "unit"
+          },
+          {
+            "name": "test_refundProofFailsOnResolvedMarket",
+            "pass": true,
+            "kind": "unit"
+          },
+          {
+            "name": "test_refundWhenCancelled",
+            "pass": true,
+            "kind": "unit"
+          },
+          {
+            "name": "test_spendGas",
+            "pass": true,
+            "kind": "unit"
+          },
+          {
+            "name": "test_tamperedActionToWithdrawRejected",
+            "pass": true,
+            "kind": "unit"
+          },
+          {
+            "name": "test_tamperedFeeRejected",
+            "pass": true,
+            "kind": "unit"
+          },
+          {
+            "name": "test_tamperedRecipientRejected",
+            "pass": true,
+            "kind": "unit"
+          },
+          {
+            "name": "test_tamperedSideRejected",
+            "pass": true,
+            "kind": "unit"
+          },
+          {
+            "name": "test_unknownRedeemKindRejected",
+            "pass": true,
+            "kind": "unit"
+          },
+          {
+            "name": "test_unknownRootRejected",
+            "pass": true,
+            "kind": "unit"
+          },
+          {
+            "name": "test_winProofFailsWhenOtherSideWon",
+            "pass": true,
+            "kind": "unit"
+          },
+          {
+            "name": "test_winnerClaimsHiddenPayout",
+            "pass": true,
+            "kind": "unit"
+          }
+        ]
+      },
+      {
+        "name": "TamperFuzzTest",
+        "file": "test/Invariants.t.sol",
+        "tests": [
+          {
+            "name": "testFuzz_anyTamperedSpendInputRejected",
+            "pass": true,
+            "kind": "fuzz",
+            "runs": 256
+          },
+          {
+            "name": "testFuzz_flippedProofByteRejected",
+            "pass": true,
+            "kind": "fuzz",
+            "runs": 256
+          },
+          {
+            "name": "test_untamperedFixtureStillPasses",
+            "pass": true,
+            "kind": "unit"
+          }
+        ]
+      },
+      {
+        "name": "VerifiersTest",
+        "file": "test/Verifiers.t.sol",
+        "tests": [
+          {
+            "name": "test_redeemProofRejectedBySpendVerifier",
+            "pass": true,
+            "kind": "unit"
+          },
+          {
+            "name": "test_redeemProofVerifies",
+            "pass": true,
+            "kind": "unit"
+          },
+          {
+            "name": "test_redeemRejectsTamperedNum",
+            "pass": true,
+            "kind": "unit"
+          },
+          {
+            "name": "test_spendProofVerifies",
+            "pass": true,
+            "kind": "unit"
+          },
+          {
+            "name": "test_spendRejectsTamperedRelayer",
+            "pass": true,
+            "kind": "unit"
+          }
+        ]
+      }
+    ],
+    "passed": 118,
+    "failed": 0,
+    "total": 118
+  },
+  "cre": {
+    "ok": true,
+    "seconds": 0.2,
+    "suites": [
+      {
+        "name": "resolver",
+        "tests": [
+          {
+            "name": "builds the single-event scoreboard URL",
+            "pass": true
+          },
+          {
+            "name": "rejects anything else",
+            "pass": true
+          },
+          {
+            "name": "home | draw | away for 3-sided markets",
+            "pass": true
+          },
+          {
+            "name": "a draw refunds a 2-sided market",
+            "pass": true
+          },
+          {
+            "name": "pending until completed; void statuses cancel",
+            "pass": true
+          },
+          {
+            "name": "throws on a malformed response instead of guessing",
+            "pass": true
+          },
+          {
+            "name": "YES only strictly above the threshold, and only after close",
+            "pass": true
+          },
+          {
+            "name": "maps codes to receiver actions",
+            "pass": true
+          },
+          {
+            "name": "encodes as ResolverReceiver.Action[]",
+            "pass": true
+          },
+          {
+            "name": "executes every ready batch",
+            "pass": true
+          },
+          {
+            "name": "donates when fees are accrued or a resolve in this report accrues them",
+            "pass": true
+          },
+          {
+            "name": "one cron handler on the configured schedule",
+            "pass": true
+          },
+          {
+            "name": "the named winner, or the field",
+            "pass": true
+          },
+          {
+            "name": "pending until the race is final; void statuses cancel",
+            "pass": true
+          },
+          {
+            "name": "espnOutcome routes racing refs",
+            "pass": true
+          }
+        ]
+      }
+    ],
+    "passed": 15,
+    "failed": 0,
+    "total": 15
+  },
+  "snippets": {
+    "spend": {
+      "path": "circuits/spend/src/main.nr",
+      "from": 50,
+      "to": 54,
+      "code": "    assert_u128(amount);\n    assert_u128(change);\n    assert_u128(public_amount);\n    assert_u128(fee);\n    assert(amount == change + public_amount + fee, \"value not conserved\");"
+    },
+    "redeem": {
+      "path": "circuits/redeem/src/main.nr",
+      "from": 66,
+      "to": 79,
+      "code": "    // 4. payout = floor(x * num / den), i.e. 0 <= x*num - payout*den < den.\n    assert_u96(x);\n    assert_u96(num);\n    assert_u96(den);\n    assert_u96(payout);\n    assert(den != 0, \"zero denominator\");\n    let remainder = x * num - payout * den;\n    assert_u96(remainder); // >= 0\n    assert_u96(den - remainder - 1); // < den\n\n    // 5. The fee comes out of the payout; the rest becomes a hidden balance note.\n    let out_amount = payout - fee;\n    assert_u128(fee);\n    assert_u128(out_amount);"
+    },
+    "fee": {
+      "path": "contracts/src/QuietOddsHook.sol",
+      "from": 205,
+      "to": 222,
+      "code": "    function directionalFee(PoolKey calldata key, bool zeroForOne) public view returns (uint24) {\n        Checkpoint storage cp = _checkpoints[key.toId()];\n        if (cp.blockNumber != uint48(block.number)) return BASE_FEE; // first swap of the block\n        uint256 start = cp.startSqrtPriceX96;\n        (uint160 sqrtNow,,,) = poolManager.getSlot0(key.toId());\n        uint256 cur = sqrtNow;\n\n        // zero-for-one pushes the price down, so it reverses an upward move, and vice versa.\n        bool reverses = zeroForOne ? cur > start : cur < start;\n        if (!reverses) return BASE_FEE;\n\n        // The move, relative to the lower of the two prices (the larger ratio).\n        uint256 ratio = FullMath.mulDiv(FullMath.mulDiv(cur, 1e6, start), cur, start); // (cur/start)^2 in pips\n        if (ratio == 0) return MAX_REVERSAL_FEE; // the price fell more than 1e6-fold\n        uint256 move = ratio > 1e6 ? ratio - 1e6 : FullMath.mulDiv(1e6 - ratio, 1e6, ratio);\n        uint256 fee = BASE_FEE + move;\n        return fee > MAX_REVERSAL_FEE ? MAX_REVERSAL_FEE : uint24(fee);\n    }"
+    }
+  }
+}

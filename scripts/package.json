@@ -10,7 +10,8 @@
     "swap-and-bet": "tsx swap-and-bet.ts",
     "batch-e2e": "tsx batch-e2e.ts",
     "rebalance": "tsx rebalance.ts",
-    "markets": "tsx markets.ts"
+    "markets": "tsx markets.ts",
+    "verify-report": "node verification-report.mjs"
   },
   "dependencies": {
     "@anon-rpc/browser-harness": "^0.4.0",

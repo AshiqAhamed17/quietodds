@@ -71,7 +71,7 @@ export default function SwapPage() {
     <>
       <AmbientField />
       <main className="wrap page">
-        <p className="eyebrow">Uniswap v4 · QuietOddsHook</p>
+        <p className="eyebrow">Private swaps · Uniswap v4</p>
         <h1>Swap, shield, bet</h1>
         <p className="lead">
           Swap ETH and USDC on our hooked Uniswap v4 pool. Toggle <b>Shield</b> and the hook moves part of the USDC

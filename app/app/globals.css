@@ -3695,9 +3695,15 @@ main.page > .panel + .panel, main.page > .statrow + .panel { margin-top: 1.2rem;
   border-radius: 50%;
   background: #ffce9f;
 }
+.net-short { display: none; }
 .nav-brand .net-pill { display: none; }
-@media (min-width: 1240px) { .nav-brand .net-pill { display: inline-flex; } }
-@media (min-width: 640px) and (max-width: 1080px) { .nav-brand .net-pill { display: inline-flex; } }
+/* Full label when there's room; short label beside the centred links. */
+@media (min-width: 640px) { .nav-brand .net-pill { display: inline-flex; } }
+@media (min-width: 1081px) and (max-width: 1560px) {
+  .nav-brand .net-long { display: none; }
+  .nav-brand .net-short { display: inline; }
+}
+@media (min-width: 1081px) and (max-width: 1200px) { .nav-brand .net-pill { display: none; } }
 .nav-sheet .net-pill { align-self: flex-start; margin-top: 0.8rem; border-bottom: 1px solid var(--line); }
 @media (max-width: 640px) {
   .foot-links { gap: 0.6rem 1.4rem; }

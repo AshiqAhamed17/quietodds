@@ -6,15 +6,15 @@ import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ConnectButton } from "./ConnectButton";
 import { StatusChip } from "./AnonBadge";
-import { NETWORK_LABEL } from "@/lib/contract";
+import { CHAIN, NETWORK_LABEL } from "@/lib/contract";
 
 const LINKS = [
   { href: "/markets", label: "Markets" },
+  { href: "/portfolio", label: "Portfolio" },
   { href: "/deposit", label: "Deposit" },
   { href: "/swap", label: "Swap" },
   { href: "/batch", label: "Batch" },
-  { href: "/portfolio", label: "Portfolio" },
-  { href: "/verified", label: "Verified" },
+  { href: "/verified", label: "Security" },
 ];
 
 export function Nav() {
@@ -42,7 +42,8 @@ export function Nav() {
           </Link>
           <span className="net-pill mono" title={`QuietOdds is in public beta on ${NETWORK_LABEL}`}>
             <span className="net-pill-dot" aria-hidden />
-            Public beta · {NETWORK_LABEL}
+            <span className="net-long">Public beta · {NETWORK_LABEL}</span>
+            <span className="net-short">Beta · {CHAIN.name}</span>
           </span>
         </div>
 

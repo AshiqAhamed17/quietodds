@@ -16,8 +16,9 @@ const ZERO = "0x0000000000000000000000000000000000000000" as const;
 
 export default function MarketDetailPage() {
   const params = useParams();
-  const id = BigInt((params.id as string) || "1");
-  const { market: m, refetch } = useMarket(id);
+  const raw = params.id as string;
+  const id = /^\d{1,9}$/.test(raw ?? "") ? BigInt(raw) : 0n;
+  const { market: m, notFound, refetch } = useMarket(id);
   const isFeed = m?.source === Source.Price;
   const { points, current } = usePriceHistory(isFeed && m ? m.priceFeed : ZERO);
 
@@ -27,8 +28,13 @@ export default function MarketDetailPage() {
       <main className="wrap page">
         <Link href="/markets" className="back-link mono">← All markets</Link>
 
-        {!m ? (
-          <p className="muted mono" style={{ marginTop: "1.4rem" }}>Loading market #{id.toString()}…</p>
+        {!m && notFound ? (
+          <div style={{ marginTop: "1.4rem" }}>
+            <h1>Market not found</h1>
+            <p className="muted">There is no market with this id. It may have been mistyped.</p>
+          </div>
+        ) : !m ? (
+          <p className="muted mono" style={{ marginTop: "1.4rem" }}>Loading market…</p>
         ) : (
           <>
             <div className="detail-head">

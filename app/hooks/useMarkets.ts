@@ -105,18 +105,24 @@ export function useMarkets(): { markets: MarketView[]; isLoading: boolean } {
 }
 
 /// One market by id.
-export function useMarket(id: bigint): { market: MarketView | undefined; refetch: () => void } {
+export function useMarket(id: bigint): { market: MarketView | undefined; notFound: boolean; refetch: () => void } {
   const { data, refetch } = useReadContracts({
     contracts: [
       { abi: marketsAbi, address: DEPLOYMENT.markets, functionName: "getMarket", args: [id] },
       { abi: marketsAbi, address: DEPLOYMENT.markets, functionName: "getSideTotals", args: [id] },
     ],
-    query: { refetchInterval: 15_000 },
+    query: { refetchInterval: 15_000, enabled: id > 0n },
   });
   const market = useMemo(() => {
     if (data?.[0]?.status !== "success") return undefined;
+    if ((data[0].result as unknown as RawMarket).status === Status.None) return undefined;
     const totals = data[1]?.status === "success" ? (data[1].result as readonly bigint[]) : undefined;
     return toView(id, data[0].result as unknown as RawMarket, totals);
   }, [data, id]);
-  return { market, refetch: () => void refetch() };
+  // A revert (per-call failure) or an empty slot means no such market; network errors don't land here.
+  const notFound =
+    id <= 0n ||
+    data?.[0]?.status === "failure" ||
+    (data?.[0]?.status === "success" && (data[0].result as unknown as RawMarket).status === Status.None);
+  return { market, notFound, refetch: () => void refetch() };
 }

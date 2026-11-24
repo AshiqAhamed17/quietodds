@@ -16,6 +16,7 @@ circuits/**/export/
 
 # Local planning docs and Claude context (not for the public repo)
 plan.md
+task.md
 CLAUDE.md
 .claude/
 

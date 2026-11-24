@@ -23,7 +23,7 @@ import { ActionStatus, useAction } from "@/components/ActionStatus";
 import { PrivateGate } from "@/components/PrivateGate";
 import { usePrivateAccount } from "@/components/PrivateAccount";
 import { DEPLOYMENT, Status, erc20Abi, explorerAddress } from "@/lib/contract";
-import { isClosed, useMarkets } from "@/hooks/useMarkets";
+import { isClosed, isListed, useMarkets } from "@/hooks/useMarkets";
 import { usdc } from "@/lib/format";
 
 /// Uniswap's v4 Quoter on Sepolia: simulates the swap through our hook (fee rule included).
@@ -92,7 +92,7 @@ function SwapForm() {
   const client = usePublicClient();
   const { writeContractAsync } = useWriteContract();
   const { markets } = useMarkets();
-  const open = useMemo(() => markets.filter((m) => m.status === Status.Open && !isClosed(m)), [markets]);
+  const open = useMemo(() => markets.filter((m) => isListed(m) && m.status === Status.Open && !isClosed(m)), [markets]);
 
   const [usdcIn, setUsdcIn] = useState(true);
   const [amount, setAmount] = useState("3");

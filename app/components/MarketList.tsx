@@ -5,7 +5,7 @@ import { useMemo, useState } from "react";
 import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
 import { Source, Status, feedLabel } from "@/lib/contract";
 import { impliedOdds, priceUsd, statusClass, statusLabel, usd, usdc, usdcCompact } from "@/lib/format";
-import { isClosed, useMarkets, type MarketCategory, type MarketView } from "@/hooks/useMarkets";
+import { isClosed, isListed, useMarkets, type MarketCategory, type MarketView } from "@/hooks/useMarkets";
 import { usePriceHistory } from "@/hooks/usePriceHistory";
 import { PriceChart } from "./PriceChart";
 import { ChartPanel } from "./ChartPanel";
@@ -34,7 +34,8 @@ const ZERO = "0x0000000000000000000000000000000000000000" as const;
 const isOpenNow = (m: MarketView) => m.status === Status.Open && !isClosed(m);
 
 export function MarketList() {
-  const { markets, isLoading } = useMarkets();
+  const { markets: all, isLoading } = useMarkets();
+  const markets = useMemo(() => all.filter(isListed), [all]);
   const [filter, setFilter] = useState<Filter>("all");
   const [sort, setSort] = useState<Sort>("soon");
   const [category, setCategory] = useState<Cat>("Trending");

@@ -1,0 +1,4 @@
+{
+  "_comment": "Market ids left off the public board: test runs and replays. They stay on chain and reachable by URL, and positions in them still show in the portfolio.",
+  "hiddenMarkets": [1, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30]
+}

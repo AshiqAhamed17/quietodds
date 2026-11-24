@@ -2,6 +2,7 @@ import type { Address } from "viem";
 import external from "../../deployments/sepolia.json" with { type: "json" };
 import core from "../../deployments/quietodds-sepolia.json" with { type: "json" };
 import hook from "../../deployments/hook-sepolia.json" with { type: "json" };
+import board from "../../deployments/board-sepolia.json" with { type: "json" };
 
 export interface Deployment {
   chainId: number;
@@ -18,6 +19,8 @@ export interface Deployment {
   /** The ETH/USDC v4 pool with QuietOddsHook. */
   poolKey: PoolKey;
   poolSwapTest: Address;
+  /** Market ids left off the public board (test runs, replays). */
+  hiddenMarkets: readonly bigint[];
 }
 
 export interface PoolKey {
@@ -42,4 +45,5 @@ export const sepolia: Deployment = {
   hook: hook.QuietOddsHook as Address,
   poolKey: hook.poolKey as PoolKey,
   poolSwapTest: external.uniswapV4.PoolSwapTest as Address,
+  hiddenMarkets: board.hiddenMarkets.map(BigInt),
 };

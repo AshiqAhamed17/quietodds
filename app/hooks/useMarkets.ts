@@ -62,6 +62,9 @@ export function toView(id: bigint, m: RawMarket, totals: readonly bigint[] | und
 }
 
 /// "Open" on chain but past its close time: betting is over, awaiting the CRE resolver.
+/// False for test and replay markets: kept off the board, still readable by id.
+export const isListed = (m: MarketView) => !DEPLOYMENT.hiddenMarkets.includes(m.id);
+
 export const isClosed = (m: MarketView, nowSec = Date.now() / 1000) =>
   m.status === Status.Open && Number(m.closeTime) <= nowSec;
 

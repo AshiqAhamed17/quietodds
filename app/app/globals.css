@@ -3708,3 +3708,8 @@ main.page > .panel + .panel, main.page > .statrow + .panel { margin-top: 1.2rem;
 @media (max-width: 640px) {
   .foot-links { gap: 0.6rem 1.4rem; }
 }
+
+/* Label/value rows (batch cards) read as one column, not a cramped 2×2 grid. */
+.detail-metrics:has(> .kv) { grid-template-columns: 1fr; gap: 0.55rem; }
+.detail-metrics > .kv b { text-align: right; }
+.card h3 + .card-src { margin-top: 0.6rem; }

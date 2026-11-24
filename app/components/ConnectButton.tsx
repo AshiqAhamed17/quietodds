@@ -21,7 +21,7 @@ export function ConnectButton() {
   if (chainId !== CHAIN.id) {
     return (
       <button className="btn" onClick={() => switchChain({ chainId: CHAIN.id })}>
-        Switch to Sepolia
+        Switch to {CHAIN.name}
       </button>
     );
   }

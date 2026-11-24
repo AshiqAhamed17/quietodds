@@ -3380,7 +3380,7 @@ main.page > .panel + .panel, main.page > .statrow + .panel { margin-top: 1.2rem;
   grid-template-columns: 1fr auto 1fr;
   gap: 1rem;
 }
-.nav-inner .logo { justify-self: start; }
+.nav-inner .nav-brand { justify-self: start; }
 .nav-links { margin-inline: 0; }
 .nav-right { justify-self: end; }
 @media (max-width: 1080px) {
@@ -3669,4 +3669,36 @@ main.page > .panel + .panel, main.page > .statrow + .panel { margin-top: 1.2rem;
 }
 .site-foot .foot-links {
   padding-block: 1.2rem 0.4rem;
+}
+
+/* Network status next to the logo: "Public beta · Sepolia testnet" */
+.nav-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+}
+.net-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.28rem 0.65rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-size: 0.7rem;
+  color: var(--fg-2);
+  white-space: nowrap;
+}
+.net-pill-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ffce9f;
+}
+.nav-brand .net-pill { display: none; }
+@media (min-width: 1240px) { .nav-brand .net-pill { display: inline-flex; } }
+@media (min-width: 640px) and (max-width: 1080px) { .nav-brand .net-pill { display: inline-flex; } }
+.nav-sheet .net-pill { align-self: flex-start; margin-top: 0.8rem; border-bottom: 1px solid var(--line); }
+@media (max-width: 640px) {
+  .foot-links { gap: 0.6rem 1.4rem; }
 }

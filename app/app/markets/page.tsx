@@ -8,7 +8,7 @@ export default function MarketsPage() {
     <>
       <AmbientField />
       <main className="wrap page">
-      <p className="eyebrow">On Sepolia</p>
+      <p className="eyebrow">Private prediction markets</p>
       <h1>Markets</h1>
       <p className="lead">
         Odds are public, bettors aren&apos;t. Every bet comes from a shielded balance through a relayer, and every

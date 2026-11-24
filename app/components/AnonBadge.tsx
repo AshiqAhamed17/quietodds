@@ -61,7 +61,7 @@ export function StatusChip() {
       <span className="anon-dot" aria-hidden />
       <span className="anon-label">{SHORT[status]}</span>
       <span className="sep" aria-hidden />
-      <span className="px" title="Chainlink ETH/USD on Sepolia">
+      <span className="px" title="Chainlink ETH/USD price feed">
         ETH {price === null ? "…" : priceUsd(price, 0)}
       </span>
     </button>

@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ConnectButton } from "./ConnectButton";
 import { StatusChip } from "./AnonBadge";
+import { NETWORK_LABEL } from "@/lib/contract";
 
 const LINKS = [
   { href: "/markets", label: "Markets" },
@@ -34,10 +35,16 @@ export function Nav() {
   return (
     <header className={`nav ${scrolled ? "scrolled" : ""}`}>
       <div className="wrap nav-inner">
-        <Link className="logo" href="/">
-          <span className="glyph" />
-          QuietOdds
-        </Link>
+        <div className="nav-brand">
+          <Link className="logo" href="/">
+            <span className="glyph" />
+            QuietOdds
+          </Link>
+          <span className="net-pill mono" title={`QuietOdds is in public beta on ${NETWORK_LABEL}`}>
+            <span className="net-pill-dot" aria-hidden />
+            Public beta · {NETWORK_LABEL}
+          </span>
+        </div>
 
         <nav className="nav-links">
           {LINKS.map((l) => {
@@ -88,6 +95,10 @@ export function Nav() {
             <a href="https://github.com/AshiqAhamed17/quietodds" target="_blank" rel="noreferrer">
               GitHub ↗
             </a>
+            <span className="net-pill mono">
+              <span className="net-pill-dot" aria-hidden />
+              Public beta · {NETWORK_LABEL}
+            </span>
           </motion.div>
         )}
       </AnimatePresence>

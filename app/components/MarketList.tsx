@@ -73,12 +73,11 @@ export function MarketList() {
     return arr;
   }, [catRows, filter, sort, featured]);
 
-  if (isLoading) return <p className="muted mono">Loading markets on Sepolia…</p>;
+  if (isLoading) return <p className="muted mono">Loading markets…</p>;
   if (markets.length === 0) return <p className="muted">No markets yet. Check back soon.</p>;
 
   return (
     <>
-      <p className="net-caption mono">On Sepolia</p>
       <div className="statrow">
         <Stat label="Markets" value={String(stats.total)} />
         <Stat label="Open now" value={String(stats.open)} />
@@ -119,7 +118,7 @@ export function MarketList() {
       </div>
 
       {shown.length === 0 ? (
-        <p className="muted" style={{ marginTop: "1.4rem" }}>Nothing here in this view.</p>
+        <p className="muted" style={{ marginTop: "1.4rem" }}>No markets match this filter.</p>
       ) : (
         <div className="grid">
           {shown.map((m, i) => (

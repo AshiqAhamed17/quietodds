@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Playfair_Display, Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
@@ -14,11 +14,20 @@ const serif = Playfair_Display({
 const sans = Inter({ subsets: ["latin"], variable: "--font-sans" });
 const mono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono" });
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://quietodds.vercel.app";
+const DESCRIPTION =
+  "Private prediction markets on Ethereum. Bet, swap and claim with zero-knowledge proofs, so nobody sees your bet.";
+
 export const metadata: Metadata = {
-  title: "QuietOdds",
-  description:
-    "Private prediction markets and private swaps on Uniswap v4. Nobody sees your bet.",
+  metadataBase: new URL(SITE_URL),
+  title: { default: "QuietOdds · Private prediction markets", template: "%s · QuietOdds" },
+  description: DESCRIPTION,
+  applicationName: "QuietOdds",
+  openGraph: { type: "website", siteName: "QuietOdds", title: "QuietOdds · Private prediction markets", description: DESCRIPTION },
+  twitter: { card: "summary_large_image", title: "QuietOdds · Private prediction markets", description: DESCRIPTION },
 };
+
+export const viewport: Viewport = { themeColor: "#050506", colorScheme: "dark" };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (

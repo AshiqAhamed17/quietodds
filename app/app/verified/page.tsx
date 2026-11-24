@@ -3,7 +3,7 @@ import { AmbientField } from "@/components/AmbientField";
 import report from "@/lib/verification.json";
 
 export const metadata: Metadata = {
-  title: "Verified · QuietOdds",
+  title: "Security & verification",
   description: "Machine-checked Lean proofs of QuietOdds' money rules, and every test suite, with live results.",
 };
 

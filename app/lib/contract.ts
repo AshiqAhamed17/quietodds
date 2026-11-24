@@ -10,6 +10,9 @@ export const CHAIN = chain;
 export const DEPLOYMENT = deployment;
 export const EXPLORER = "https://sepolia.etherscan.io";
 export const REPO = "https://github.com/AshiqAhamed17/quietodds";
+/// Shown in the nav: "Public beta · Sepolia testnet" now, the chain name on mainnet.
+export const NETWORK_LABEL = chain.testnet ? `${chain.name} testnet` : chain.name;
+export const IS_TESTNET = !!chain.testnet;
 export const RELAYER_URL = process.env.NEXT_PUBLIC_RELAYER_URL ?? "https://quietodds-relayer.vercel.app";
 
 export const USDC_DECIMALS = 6;

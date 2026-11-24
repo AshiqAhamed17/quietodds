@@ -3661,3 +3661,12 @@ main.page > .panel + .panel, main.page > .statrow + .panel { margin-top: 1.2rem;
 @media (max-width: 480px) {
   .vf-cert-grid { grid-template-columns: 1fr; }
 }
+
+/* Compact footer on app pages */
+.site-foot {
+  margin-top: clamp(3rem, 8vw, 6rem);
+  border-top: 1px solid var(--line);
+}
+.site-foot .foot-links {
+  padding-block: 1.2rem 0.4rem;
+}

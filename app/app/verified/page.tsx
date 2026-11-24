@@ -446,7 +446,7 @@ function TrustGap() {
     ["Constraints copied by hand", "The circuit lines were transcribed into Lean by hand. Each hypothesis names the main.nr line it models, so you can check them side by side above. Nothing checks this mechanically."],
     ["Trusted toolchain", "We trust the Noir compiler, Barretenberg, the generated Solidity verifier, and Poseidon's collision resistance. The proofs are about the arithmetic, not these tools."],
     ["Model, not bytecode", "Theorems 3 and 4 model contract logic. Theorem 3 relies on three tested facts: stakes really sum to the total, each note redeems once, and the pot is really in the pool. Theorem 4 works over real numbers and leaves out integer rounding and price encoding."],
-    ["Not audited", "This is a hackathon build on Sepolia. Formally verified where it matters most, tested everywhere else, but not audited."],
+    ["Not audited", "QuietOdds is in public beta on testnet. It is formally verified where it matters most and tested everywhere else, but it has not been audited yet."],
   ];
   return (
     <section className="vf-section" id="limits">

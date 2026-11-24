@@ -23,7 +23,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ action: st
   } catch {
     return NextResponse.json({ error: "invalid JSON" }, { status: 400 });
   }
-  // Sepolia only: this deployment is a testnet demo.
+  // Only the chain this app is deployed on.
   const chain = body.tokenInChainId ?? body.chainId ?? (body.quote as { chainId?: number } | undefined)?.chainId;
   if (chain !== undefined && Number(chain) !== SEPOLIA) return NextResponse.json({ error: "Sepolia only" }, { status: 400 });
 

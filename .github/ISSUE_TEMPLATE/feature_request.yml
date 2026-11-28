@@ -1,0 +1,21 @@
+name: Feature or idea
+description: Suggest a feature, a new kind of market, or an integration.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What would you like to do?
+      description: The problem or use case, in a few sentences.
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: How could QuietOdds help?
+      description: Your idea for a solution. Rough is fine.
+  - type: textarea
+    id: privacy
+    attributes:
+      label: Privacy impact
+      description: Would this reveal anything new about users (amounts, timing, links between actions)?

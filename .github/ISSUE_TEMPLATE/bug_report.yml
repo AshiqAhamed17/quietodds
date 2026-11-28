@@ -1,0 +1,49 @@
+name: Bug report
+description: Something in the app, relayer, contracts or circuits doesn't work as it should.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting! **Security problems go through private reporting, not here**: see [SECURITY.md](https://github.com/AshiqAhamed17/quietodds/blob/main/SECURITY.md).
+        Never paste private keys, seed phrases or your viewing key into an issue.
+  - type: dropdown
+    id: area
+    attributes:
+      label: Where is the problem?
+      options:
+        - App (quietodds.vercel.app)
+        - Relayer
+        - Contracts
+        - Circuits
+        - CRE workflow
+        - Lean proofs
+        - Docs
+        - Not sure
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What you did, what you expected, and what happened instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Go to …
+        2. Click …
+        3. See …
+  - type: input
+    id: tx
+    attributes:
+      label: Transaction hash (if any)
+      description: A Sepolia transaction that failed or looks wrong.
+  - type: input
+    id: env
+    attributes:
+      label: Browser and wallet
+      placeholder: Chrome 131, MetaMask 12

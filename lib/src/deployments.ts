@@ -3,6 +3,7 @@ import external from "../../deployments/sepolia.json" with { type: "json" };
 import core from "../../deployments/quietodds-sepolia.json" with { type: "json" };
 import hook from "../../deployments/hook-sepolia.json" with { type: "json" };
 import board from "../../deployments/board-sepolia.json" with { type: "json" };
+import privacyPools from "../../deployments/privacy-pools-sepolia.json" with { type: "json" };
 
 export interface Deployment {
   chainId: number;
@@ -21,6 +22,8 @@ export interface Deployment {
   poolSwapTest: Address;
   /** Market ids left off the public board (test runs, replays). */
   hiddenMarkets: readonly bigint[];
+  /** Funding from Privacy Pools v2: their PoolVault and our processor for it. */
+  privacyPools: { poolVault: Address; depositor: Address };
 }
 
 export interface PoolKey {
@@ -46,4 +49,8 @@ export const sepolia: Deployment = {
   poolKey: hook.poolKey as PoolKey,
   poolSwapTest: external.uniswapV4.PoolSwapTest as Address,
   hiddenMarkets: board.hiddenMarkets.map(BigInt),
+  privacyPools: {
+    poolVault: privacyPools.PoolVault as Address,
+    depositor: privacyPools.PrivacyPoolsDepositor as Address,
+  },
 };

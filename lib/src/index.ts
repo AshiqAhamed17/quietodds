@@ -11,3 +11,4 @@ export * from "./abi.ts";
 export * from "./deployments.ts";
 export * from "./relay.ts";
 export * from "./hook.ts";
+export * from "./funding.ts";

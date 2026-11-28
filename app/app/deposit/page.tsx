@@ -3,13 +3,14 @@
 import { useState } from "react";
 import { formatUnits, isAddress, parseUnits, type Address } from "viem";
 import { useAccount, usePublicClient, useReadContracts, useWriteContract } from "wagmi";
-import { ASSET, deriveNote, encryptNote } from "@quietodds/lib";
+import { ASSET } from "@quietodds/lib";
 import { AmbientField } from "@/components/AmbientField";
 import { ActionStatus, useAction } from "@/components/ActionStatus";
 import { PrivateGate } from "@/components/PrivateGate";
 import { usePrivateAccount } from "@/components/PrivateAccount";
 import { DEPLOYMENT, erc20Abi, explorerAddress, shieldedPoolAbi } from "@/lib/contract";
 import { relayedSpend } from "@/lib/private";
+import { nextShieldNote } from "@/lib/funding";
 import { AmountInput, TokenPicker } from "@/components/Token";
 
 const ASSETS = [
@@ -71,10 +72,7 @@ function Deposit() {
       const have = await client!.readContract({ abi: erc20Abi, address: a.token, functionName: "balanceOf", args: [address!] });
       if (value > have) throw new Error(`Your wallet has ${fmt(have, a.decimals)} ${a.label}`);
       onStep("sync");
-      const fresh = await acct.sync();
-      const index = acct.reserveIndices(fresh.notes, 1);
-      const note = deriveNote(acct.keys!, index);
-      const ct = await encryptNote(acct.keys!.viewingKey, { kind: "balance", index, asset: a.id, amount: value });
+      const note = await nextShieldNote(acct, a.id, value);
       onStep("relay");
       const allowance = await client!.readContract({ abi: erc20Abi, address: a.token, functionName: "allowance", args: [address!, DEPLOYMENT.pool] });
       if (allowance < value) {
@@ -84,7 +82,7 @@ function Deposit() {
         abi: shieldedPoolAbi,
         address: DEPLOYMENT.pool,
         functionName: "deposit",
-        args: [a.id, value, note.precommitment, ct],
+        args: [a.id, value, note.precommitment, note.ciphertext],
       });
       await wait(hash);
       void refetch();

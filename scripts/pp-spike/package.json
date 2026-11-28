@@ -1,0 +1,14 @@
+{
+  "name": "quietodds-pp-spike",
+  "private": true,
+  "type": "module",
+  "description": "Phase 1.1 spike: fund from Privacy Pools v2 with a custom transact processor. Throwaway; kept outside the npm workspaces so the SDK's GPL-3.0 dependencies (snarkjs, circomlibjs) never reach the app.",
+  "scripts": {
+    "spike": "tsx pp-spike.ts"
+  },
+  "dependencies": {
+    "@0xbow/privacy-pools-v2-sdk": "1.1.0",
+    "tsx": "^4.23.15",
+    "viem": "2.45.3"
+  }
+}

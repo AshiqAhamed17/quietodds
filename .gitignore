@@ -33,3 +33,6 @@ lean/.lake/
 
 # Vercel link for the app (root directory: app)
 /.vercel/
+
+# Privacy Pools spike note state (keys are re-derived, but note secrets live here)
+scripts/pp-spike/.pp-state/

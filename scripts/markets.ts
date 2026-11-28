@@ -1,8 +1,13 @@
 // Creates QuietOdds markets on Sepolia from the deployer (the Markets owner).
 //
-//   npm run markets -w scripts -- launch        F1 + price markets for judging week
+//   npm run markets -w scripts -- december      football, F1 and price markets for December 2026
+//   npm run markets -w scripts -- launch        the November 2026 launch set (already created)
 //   npm run markets -w scripts -- demo [min]    replay markets for a demo video,
 //                                               closing in `min` minutes (default 8)
+//
+// Football markets close at kick-off and F1 markets at lights out. Sports sides
+// are "Home|Draw|Away" (CRE reads ESPN's home/away score); F1 sides must match
+// ESPN's driver names, with "Anyone else" last.
 //
 // A replay market asks about an event that has already finished, so right
 // after it closes the CRE workflow can resolve it from ESPN and the demo can
@@ -48,6 +53,24 @@ const LAUNCH: Spec[] = [
   { question: "Will BTC be above $76,000 at 12:00 UTC on Nov 9?", outcomes: "No|Yes", close: at("2026-11-09T12:00:00Z"), source: PRICE, feed: BTC_USD, threshold: usd8(76_000) },
 ];
 
+// ESPN ids and kick-off times checked on 28 Nov 2026. Chainlink on Sepolia read
+// ETH ≈ $1,645 and BTC ≈ $59,200, so the price lines sit close to spot.
+const F1_DEC = "Kimi Antonelli|Max Verstappen|Lando Norris|Anyone else";
+const DECEMBER: Spec[] = [
+  { question: "Arsenal vs Manchester City (Premier League, Nov 29)", outcomes: "Arsenal|Draw|Manchester City", close: at("2026-11-29T16:30:00Z"), source: SPORTS, ref: "espn:soccer/eng.1:401878753" },
+  { question: "Who wins the Qatar Grand Prix? (Nov 29)", outcomes: F1_DEC, close: at("2026-11-29T16:00:00Z"), source: SPORTS, ref: "espn:racing/f1:600057450" },
+  { question: "Barcelona vs Atlético Madrid (La Liga, Dec 2)", outcomes: "Barcelona|Draw|Atlético Madrid", close: at("2026-12-02T20:30:00Z"), source: SPORTS, ref: "espn:soccer/esp.1:401882700" },
+  { question: "Chelsea vs Liverpool (Premier League, Dec 5)", outcomes: "Chelsea|Draw|Liverpool", close: at("2026-12-05T12:30:00Z"), source: SPORTS, ref: "espn:soccer/eng.1:401879213" },
+  { question: "Who wins the Abu Dhabi Grand Prix? (Dec 6)", outcomes: F1_DEC, close: at("2026-12-06T13:00:00Z"), source: SPORTS, ref: "espn:racing/f1:600057451" },
+  { question: "Barcelona vs Manchester City (Champions League, Dec 8)", outcomes: "Barcelona|Draw|Manchester City", close: at("2026-12-08T20:00:00Z"), source: SPORTS, ref: "espn:soccer/uefa.champions:401915285" },
+  { question: "Arsenal vs Real Madrid (Champions League, Dec 9)", outcomes: "Arsenal|Draw|Real Madrid", close: at("2026-12-09T20:00:00Z"), source: SPORTS, ref: "espn:soccer/uefa.champions:401915367" },
+  { question: "Manchester City vs Chelsea (Premier League, Dec 12)", outcomes: "Manchester City|Draw|Chelsea", close: at("2026-12-12T17:30:00Z"), source: SPORTS, ref: "espn:soccer/eng.1:401878742" },
+  { question: "Napoli vs AC Milan (Serie A, Dec 13)", outcomes: "Napoli|Draw|AC Milan", close: at("2026-12-13T19:45:00Z"), source: SPORTS, ref: "espn:soccer/ita.1:401875028" },
+  { question: "Will ETH be above $1,700 at 12:00 UTC on Dec 5?", outcomes: "No|Yes", close: at("2026-12-05T12:00:00Z"), source: PRICE, feed: ETH_USD, threshold: usd8(1_700) },
+  { question: "Will BTC be above $60,000 at 12:00 UTC on Dec 7?", outcomes: "No|Yes", close: at("2026-12-07T12:00:00Z"), source: PRICE, feed: BTC_USD, threshold: usd8(60_000) },
+  { question: "Will ETH end 2026 above $2,000? (Dec 31, 23:00 UTC)", outcomes: "No|Yes", close: at("2026-12-31T23:00:00Z"), source: PRICE, feed: ETH_USD, threshold: usd8(2_000) },
+];
+
 function demo(minutes: number): Spec[] {
   const close = Math.floor(Date.now() / 1000) + minutes * 60;
   return [
@@ -77,6 +100,6 @@ async function create(s: Spec) {
 }
 
 const [mode = "launch", arg] = process.argv.slice(2);
-const specs = mode === "demo" ? demo(Number(arg ?? 8)) : mode === "launch" ? LAUNCH : null;
-if (!specs) throw new Error(`unknown mode "${mode}": use launch or demo [minutes]`);
+const specs = mode === "demo" ? demo(Number(arg ?? 8)) : mode === "december" ? DECEMBER : mode === "launch" ? LAUNCH : null;
+if (!specs) throw new Error(`unknown mode "${mode}": use december, launch or demo [minutes]`);
 for (const s of specs) await create(s);

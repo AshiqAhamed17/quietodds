@@ -1,6 +1,6 @@
 # QuietOdds threat model
 
-What QuietOdds protects, who could attack it, and where the limits are. This covers the hackathon build on Sepolia. It is not audited.
+What QuietOdds protects, who could attack it, and where the limits are. This covers the current public beta (v0.3) on Sepolia testnet. It is not audited yet.
 
 ## What we protect
 
@@ -60,7 +60,7 @@ What QuietOdds protects, who could attack it, and where the limits are. This cov
   - Results come from ESPN, with median consensus across CRE nodes. That is a single data source, so a wrong ESPN result means a wrong resolution.
   - A market whose winning side has no stake is cancelled and refunded. The owner can cancel stale markets.
   - Future work: a multi-source check and a dispute window.
-- **Hackathon caveat:** for the hackathon, CRE runs as `cre workflow simulate --broadcast` from our machine, not a deployed DON. The trust is in our operator key plus the simulation forwarder, until it is deployed.
+- **Current limit:** CRE runs as `cre workflow simulate --broadcast` from our machine, not a deployed DON. Until it is deployed, the trust is in our operator key plus the simulation forwarder. Moving to the DON is on the roadmap.
 
 ### Market creator (owner)
 
@@ -71,7 +71,7 @@ What QuietOdds protects, who could attack it, and where the limits are. This cov
 - **Can't:**
   - Move user funds.
   - Change a market's outcome after it is resolved.
-- **Not done:** no multisig or timelock in the hackathon build.
+- **Not done yet:** no multisig or timelock. Both are planned before mainnet.
 
 ### MEV searchers
 

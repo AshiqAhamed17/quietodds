@@ -1,6 +1,6 @@
 # Uniswap v4 feedback
 
-This is from building QuietOdds at ETHGlobal Mumbai 2026. We built:
+This was written while building QuietOdds v0.2 at ETHGlobal Mumbai 2026. We built:
 
 - a hook with `beforeSwap`/`afterSwap` return deltas that deposits part of a swap into a shielded pool
 - a directional dynamic fee and sandwich skim, ported from OpenZeppelin's `AntiSandwichHook`

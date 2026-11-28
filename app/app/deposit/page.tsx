@@ -57,7 +57,6 @@ function Deposit() {
     contracts: ASSETS.map((x) => ({ abi: erc20Abi, address: x.token, functionName: "balanceOf" as const, args: [address!] as const })),
     query: { enabled: !!address },
   });
-  const balance = (wallet?.[asset]?.result as bigint | undefined) ?? 0n;
 
   const wait = async (hash: `0x${string}`) => {
     const r = await client!.waitForTransactionReceipt({ hash });

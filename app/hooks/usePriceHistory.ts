@@ -18,22 +18,23 @@ const POLL_MS = 12_000; // live refresh cadence
 /// price API — so the chart matches what actually resolves the market. If a feed
 /// has too little history (or rounds revert at a phase boundary), it degrades to
 /// starting live and growing from now.
+const NO_POINTS: PricePoint[] = [];
+
 export function usePriceHistory(feed?: `0x${string}`): {
   points: PricePoint[];
   current: number | null;
   loading: boolean;
 } {
   const client = usePublicClient();
-  const [points, setPoints] = useState<PricePoint[]>([]);
-  const [loading, setLoading] = useState(true);
+  // History is tagged with its feed, so switching feeds shows nothing stale.
+  const [hist, setHist] = useState<{ feed?: string; points: PricePoint[]; loaded: boolean }>({ points: [], loaded: false });
   const lastT = useRef(0);
 
   useEffect(() => {
     if (!client || !feed) return;
     let alive = true;
     lastT.current = 0;
-    setPoints([]);
-    setLoading(true);
+    const setPoints = (points: PricePoint[]) => setHist({ feed, points, loaded: true });
 
     async function seed() {
       try {
@@ -83,7 +84,7 @@ export function usePriceHistory(feed?: `0x${string}`): {
       } catch {
         // network hiccup — leave empty; the poll below will retry
       } finally {
-        if (alive) setLoading(false);
+        if (alive) setHist((h) => (h.feed === feed ? { ...h, loaded: true } : { feed, points: [], loaded: true }));
       }
     }
 
@@ -100,7 +101,7 @@ export function usePriceHistory(feed?: `0x${string}`): {
         // only append when the reading is newer than what we have
         if (t <= lastT.current) return;
         lastT.current = t;
-        setPoints((prev) => [...prev, { t, p }].slice(-MAX_POINTS));
+        setHist((h) => (h.feed === feed ? { ...h, points: [...h.points, { t, p }].slice(-MAX_POINTS) } : h));
       } catch {
         /* ignore transient errors */
       }
@@ -114,6 +115,8 @@ export function usePriceHistory(feed?: `0x${string}`): {
     };
   }, [client, feed]);
 
+  const points = hist.feed === feed ? hist.points : NO_POINTS;
+  const loading = !(hist.feed === feed && hist.loaded);
   const current = points.length ? points[points.length - 1].p : null;
   return { points, current, loading };
 }

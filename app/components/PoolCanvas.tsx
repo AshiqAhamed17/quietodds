@@ -71,7 +71,8 @@ export function PoolCanvas() {
         ctx.beginPath();
         for (let x = W * 0.08; x <= W * 0.92; x += 6 * DPR) {
           const y = surfaceY - off + Math.sin(x * 0.01 + t * 0.001 + i) * amp * Math.sin(x * 0.003 - t * 0.0007);
-          x === W * 0.08 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+          if (x === W * 0.08) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
         }
         ctx.strokeStyle = `rgba(${C},${alpha})`;
         ctx.stroke();

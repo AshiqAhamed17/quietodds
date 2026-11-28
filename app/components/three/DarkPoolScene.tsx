@@ -81,8 +81,10 @@ function Scene() {
       if (Math.abs(p - lastP.current) > 0.001) {
         lastP.current = p;
         const t = ease(p);
-        for (let i = 0; i < live.length; i++) live[i] = sphere[i] + (ring[i] - sphere[i]) * t;
+        // Morph the geometry's own buffer (seeded from `live`) in place.
         const attr = pts.geometry.getAttribute("position") as THREE.BufferAttribute;
+        const pos = attr.array as Float32Array;
+        for (let i = 0; i < pos.length; i++) pos[i] = sphere[i] + (ring[i] - sphere[i]) * t;
         attr.needsUpdate = true;
       }
     }

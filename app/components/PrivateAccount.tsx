@@ -84,12 +84,17 @@ export function PrivateAccountProvider({ children }: { children: React.ReactNode
   const cache = useRef<{ state: PoolState; owned: OwnedNote[] } | null>(null);
   const lastError = useRef<string | null>(null);
 
-  // A different wallet is a different private account.
-  useEffect(() => {
+  // A different wallet is a different private account: reset during render
+  // (React's pattern for state derived from a changed value), refs in an effect.
+  const [owner, setOwner] = useState(address);
+  if (owner !== address) {
+    setOwner(address);
     setKeys(null);
     setNotes([]);
     setTree(null);
     setScan({ phase: "idle", progress: 0, detail: "" });
+  }
+  useEffect(() => {
     reserved.current = 0;
     cache.current = null;
   }, [address]);

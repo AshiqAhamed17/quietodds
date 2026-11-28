@@ -20,7 +20,10 @@ const LINKS = [
 export function Nav() {
   const path = usePathname();
   const [scrolled, setScrolled] = useState(false);
-  const [open, setOpen] = useState(false);
+  // The sheet remembers the path it was opened on, so navigating closes it.
+  const [openOn, setOpenOn] = useState<string | null>(null);
+  const open = openOn === path;
+  const setOpen = (next: (o: boolean) => boolean) => setOpenOn(next(open) ? path : null);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -28,9 +31,6 @@ export function Nav() {
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
-
-  // close the mobile sheet on route change
-  useEffect(() => setOpen(false), [path]);
 
   return (
     <header className={`nav ${scrolled ? "scrolled" : ""}`}>

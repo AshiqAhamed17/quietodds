@@ -24,6 +24,8 @@ export function candleProductForFeed(feed?: string): string | null {
   return COINBASE_PRODUCT[feed.toLowerCase()] ?? null;
 }
 
+const NO_CANDLES: Candle[] = [];
+
 /// Real OHLC candles from Coinbase's keyless public API (CORS-enabled, no key).
 /// Fetches lazily — only when `product` is non-null (i.e. the candle view is
 /// active). This is reference spot data, distinct from the Chainlink feed that
@@ -33,18 +35,14 @@ export function useCandles(product: string | null, granularity = 3600): {
   loading: boolean;
   error: boolean;
 } {
-  const [candles, setCandles] = useState<Candle[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(false);
+  // The last result, tagged with the request it answers; anything else is still loading.
+  const key = product ? `${product}:${granularity}` : null;
+  const [res, setRes] = useState<{ key: string; candles: Candle[]; error: boolean } | null>(null);
 
   useEffect(() => {
-    if (!product) {
-      setCandles([]);
-      return;
-    }
+    if (!product) return;
+    const key = `${product}:${granularity}`;
     let alive = true;
-    setLoading(true);
-    setError(false);
 
     fetch(`https://api.exchange.coinbase.com/products/${product}/candles?granularity=${granularity}`)
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
@@ -56,15 +54,16 @@ export function useCandles(product: string | null, granularity = 3600): {
           .map(([t, low, high, open, close]) => ({ time: t, open, high, low, close }))
           .filter((c) => (seen.has(c.time) ? false : seen.add(c.time)))
           .sort((a, b) => a.time - b.time);
-        setCandles(cs);
+        setRes({ key, candles: cs, error: false });
       })
-      .catch(() => alive && setError(true))
-      .finally(() => alive && setLoading(false));
+      .catch(() => alive && setRes({ key, candles: [], error: true }));
 
     return () => {
       alive = false;
     };
   }, [product, granularity]);
 
-  return { candles, loading, error };
+  if (!key) return { candles: NO_CANDLES, loading: false, error: false };
+  const mine = res?.key === key ? res : null;
+  return { candles: mine?.candles ?? NO_CANDLES, loading: !mine, error: mine?.error ?? false };
 }

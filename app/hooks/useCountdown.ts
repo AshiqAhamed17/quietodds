@@ -6,18 +6,16 @@ import { useEffect, useState } from "react";
 /// Returns 0 once the target has passed. SSR-safe (starts from a stable value).
 export function useCountdown(targetUnixSeconds?: bigint | number): number {
   const target = targetUnixSeconds === undefined ? 0 : Number(targetUnixSeconds);
-  const [secondsLeft, setSecondsLeft] = useState(() => remaining(target));
+  const [now, setNow] = useState(nowSec);
 
   useEffect(() => {
-    setSecondsLeft(remaining(target));
-    const iv = setInterval(() => setSecondsLeft(remaining(target)), 1000);
+    const iv = setInterval(() => setNow(nowSec()), 1000);
     return () => clearInterval(iv);
-  }, [target]);
+  }, []);
 
-  return secondsLeft;
+  return target ? Math.max(0, target - now) : 0;
 }
 
-function remaining(target: number): number {
-  if (!target) return 0;
-  return Math.max(0, target - Math.floor(Date.now() / 1000));
+function nowSec(): number {
+  return Math.floor(Date.now() / 1000);
 }
